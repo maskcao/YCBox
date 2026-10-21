@@ -14,7 +14,7 @@
          白底上看不出边界。改成极浅灰，且**留一点透明度** —— 这样开了壁纸时
          卡片能透出壁纸背景（半透明色叠在纯色页面底上，与不透明时观感几乎一致）。
          夜间模式见 values-night/colors.xml。-->
-    <color name="bg_gray">#CCF6F6F8</color>
+    <color name="bg_gray">#FFE3E3E3</color>
     <color name="gray_darker">#FF5E5E66</color>
     <!--    深灰点击透明度-->
     <color name="gray_darker_press_alpha">#FFE5E5E8</color>

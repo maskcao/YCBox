@@ -4,7 +4,7 @@
     <color name="colorPrimary">#FFFFFFFF</color>
     <color name="colorAccent">#FFFFFFFF</color>
     <color name="windowBackground">#FF080808</color>
-    <color name="bg_gray">#CC141418</color>
+    <color name="bg_gray">#FF292929</color>
     <color name="gray_darker">#FF8E8E96</color>
     <color name="gray_darker_press_alpha">#FF2A2A33</color>
     <color name="text_foreground">#FFFFFFFF</color>
