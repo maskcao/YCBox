@@ -111,7 +111,6 @@ public class SelectDialogAdapter<T> extends ListAdapter<T, SelectDialogAdapter.S
         MaterialCheckBox view = holder.itemView.findViewById(R.id.tvName);
         view.setChecked(position == select);
         view.setText(dialogInterface.getDisplay(value));
-        bindAvatar(holder, value);
         holder.itemView.setOnClickListener(v -> {
             if (position == select)
                 return;
@@ -120,61 +119,5 @@ public class SelectDialogAdapter<T> extends ListAdapter<T, SelectDialogAdapter.S
             notifyItemChanged(select);
             dialogInterface.click(value, position);
         });
-    }
-
-    /**
-     * 绑定封面：配置给了 pic 就加载网络图，加载失败（或压根没给）回退到首字头像。
-     * <p>RecyclerView 复用时必须先复位状态，否则上一条目的图会串到下一条。
-     */
-    private void bindAvatar(SelectViewHolder holder, T value) {
-        View flAvatar = holder.itemView.findViewById(R.id.fl_avatar);
-        ImageView ivPic = holder.itemView.findViewById(R.id.iv_pic);
-        TextView tvAvatar = holder.itemView.findViewById(R.id.tv_avatar);
-        String pic = dialogInterface.getPic(value);
-        String avatar = dialogInterface.getAvatarText(value);
-
-        ivPic.setVisibility(View.GONE);
-        ivPic.setImageDrawable(null);
-        tvAvatar.setVisibility(View.GONE);
-        tvAvatar.setText("");
-        flAvatar.setVisibility(View.VISIBLE);
-
-        if (!TextUtils.isEmpty(pic)) {
-            Glide.with(holder.itemView)
-                    .load(pic)
-                    .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
-                    .listener(new RequestListener<Drawable>() {
-                        @Override
-                        public boolean onLoadFailed(@Nullable GlideException e, Object model,
-                                                    Target<Drawable> target, boolean isFirstResource) {
-                            // 图拉不到就退回首字头像，别留一个空白方块
-                            showAvatar(tvAvatar, avatar);
-                            return false;
-                        }
-
-                        @Override
-                        public boolean onResourceReady(Drawable resource, Object model,
-                                                       Target<Drawable> target, DataSource dataSource, boolean isFirstResource) {
-                            ivPic.setVisibility(View.VISIBLE);
-                            tvAvatar.setVisibility(View.GONE);
-                            return false;
-                        }
-                    })
-                    .into(ivPic);
-        } else {
-            showAvatar(tvAvatar, avatar);
-        }
-        if (TextUtils.isEmpty(pic) && TextUtils.isEmpty(avatar)) {
-            flAvatar.setVisibility(View.GONE);
-        }
-    }
-
-    private void showAvatar(TextView tvAvatar, String avatar) {
-        if (TextUtils.isEmpty(avatar)) {
-            tvAvatar.setVisibility(View.GONE);
-            return;
-        }
-        tvAvatar.setText(avatar);
-        tvAvatar.setVisibility(View.VISIBLE);
     }
 }
