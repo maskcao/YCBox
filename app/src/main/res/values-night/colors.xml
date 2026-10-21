@@ -27,7 +27,7 @@
     <color name="color_FFFFFF">#FFFFFFFF</color>
     <!-- 夜间表面：与 bg_gray 同色（夜间 #141418 与页面 #080808 本就有对比，
          描边再给一道浅色使卡片边界更清楚） -->
-    <color name="bg_surface">#CC141418</color>
+    <color name="bg_surface">#FF292929</color>
     <color name="bg_field">#CC141418</color>
     <color name="stroke_subtle">#24FFFFFF</color>
     <!-- 夜间：遮罩与导航栏用半透明黑，避免壁纸太亮影响文字 -->

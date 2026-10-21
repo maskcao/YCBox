@@ -100,7 +100,7 @@
 
     <!-- 浅色模式的可辨识表面（半透明，开壁纸时能透出背景）：bg_gray 与
          windowBackground 同为 #FFFFFF 会让搜索框、卡片直接"糊"在白底上 -->
-    <color name="bg_surface">#CCF7F7F9</color>
+    <color name="bg_surface">#FFE3E3E3</color>
     <color name="bg_field">#CCF1F1F4</color>
     <color name="stroke_subtle">#1F000000</color>
     <!-- 壁纸遮罩：盖在图片上，保证页面文字仍然可读（浅色模式压一层半透明白） -->
