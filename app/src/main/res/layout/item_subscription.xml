@@ -22,6 +22,7 @@
         app:layout_constraintTop_toTopOf="parent" />
 
     <!-- 名称行：cb 右侧 → 来自标签左侧 -->
+    <!-- 名称：终点锚在内置标签左侧（内置标签固定在行右侧，不再随名字长度变动） -->
     <TextView
         android:id="@+id/tv_name"
         android:layout_width="0dp"
@@ -34,7 +35,7 @@
         android:textSize="15sp"
         android:textStyle="bold"
         app:layout_constraintBottom_toBottomOf="@id/cb"
-        app:layout_constraintEnd_toStartOf="@id/tv_from"
+        app:layout_constraintEnd_toStartOf="@id/tv_builtin"
         app:layout_constraintStart_toEndOf="@id/cb"
         app:layout_constraintTop_toTopOf="@id/cb"
         tools:text="小账订阅小账订阅小账订阅" />
@@ -43,14 +44,13 @@
         android:id="@+id/tv_builtin"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="6dp"
         android:background="@drawable/bg_tag_builtin"
         android:text="内置"
         android:textColor="@color/accent_solid"
         android:textSize="11dp"
         android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="@id/tv_name"
-        app:layout_constraintStart_toEndOf="@id/tv_name"
+        app:layout_constraintEnd_toStartOf="@id/tv_from"
         app:layout_constraintTop_toTopOf="@id/tv_name"
         tools:visibility="visible" />
 

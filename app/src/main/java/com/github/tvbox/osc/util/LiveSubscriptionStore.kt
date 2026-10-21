@@ -121,6 +121,36 @@ object LiveSubscriptionStore {
     }
 
     /**
+     * 清理过期的来源标记。
+     *
+     * <p>配置订阅改名/删除后，直播条目上的「来自：xxx」会残留旧名字（导入时只追加、
+     * 不会删），比如莫名出现的 "This_is_a"。这里把来源里已不存在于
+     * [validNames]（当前所有配置订阅的名字）的名字逐个摘除；
+     * 摘完一个不剩就置空（回到"没来源"的样子）。手填条目（from 为空）不受影响。
+     *
+     * @return 清理后的完整列表（无论是否发生变化都返回，方便调用方直接刷 UI）
+     */
+    @JvmStatic
+    fun retainSources(validNames: Set<String>): List<Subscription> {
+        val list = load()
+        var dirty = false
+        for (item in list) {
+            val from = item.from ?: continue
+            if (from.isBlank()) continue
+            val kept = from.split('、')
+                .map { it.trim() }
+                .filter { it.isNotEmpty() && validNames.contains(it) }
+            val next = if (kept.isEmpty()) null else kept.joinToString("、")
+            if (next != from) {
+                item.from = next
+                dirty = true
+            }
+        }
+        if (dirty) save(list)
+        return list
+    }
+
+    /**
      * 配置订阅被删除后，把它从所有直播订阅的来源标记里摘掉。
      *
      * <p>否则列表上会出现"来自：xxx"，而那个 xxx 已经被用户删了，属于脏数据。

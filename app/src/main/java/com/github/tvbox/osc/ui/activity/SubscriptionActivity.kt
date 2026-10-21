@@ -225,6 +225,13 @@ class SubscriptionActivity : BaseVbActivity<ActivitySubscriptionBinding>() {
         if (mTabLive == live) return
         mTabLive = live
         if (live) ensureLiveLoaded()
+        // 清理过期来源标记：配置订阅改名/删除后，「来自：xxx」会残留旧名字
+        if (live) {
+            val valid = mSubscriptions.map { it.name }.toSet()
+            val cleaned = LiveSubscriptionStore.retainSources(valid)
+            mLiveSubscriptions.clear()
+            mLiveSubscriptions.addAll(cleaned)
+        }
         // "来自：xxx"只有直播订阅才有意义
         mSubscriptionAdapter.setShowFrom(live)
         updateTabStyle()
