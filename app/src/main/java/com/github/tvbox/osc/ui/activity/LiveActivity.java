@@ -863,6 +863,11 @@ public class LiveActivity extends BaseActivity {
                 mHandler.post(new Runnable() {
                     @Override
                     public void run() {
+                        // 频道加载是异步的：回调回来时页面可能已经退出销毁，
+                        // 此时 mVideoView 已在 onDestroy 置空，继续走会 NPE 崩溃
+                        if (isFinishing() || isDestroyed()) {
+                            return;
+                        }
                         LiveActivity.this.showSuccess();
                         initLiveState();
                     }
@@ -872,6 +877,10 @@ public class LiveActivity extends BaseActivity {
     }
 
     private void initLiveState() {
+        // 双保险：页面已退出或播放器已销毁时不再初始化（防 NPE 崩溃）
+        if (mVideoView == null || isFinishing() || isDestroyed()) {
+            return;
+        }
         String lastChannelName = Hawk.get(HawkConfig.LIVE_CHANNEL, "");
 
         int lastChannelGroupIndex = -1;
