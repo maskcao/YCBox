@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 订阅条目选中态卡片：同色底 + 2dp accent 描边 -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="@color/bg_surface"/>
+    <stroke android:width="2dp" android:color="@color/dock_accent"/>
+    <corners android:radius="14dp"/>
+</shape>

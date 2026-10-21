@@ -1,108 +1,117 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- 订阅条目（参考样式）：独立圆角卡片，圆形单选 + 名称/来自标签/删除圆钮，地址在名称下方 -->
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/item"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:padding="10dp">
+    android:layout_marginBottom="8dp"
+    android:background="@drawable/bg_card_rounded"
+    android:padding="12dp">
 
     <CheckBox
         android:id="@+id/cb"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="26dp"
+        android:layout_height="26dp"
+        android:button="@drawable/button_radio_dock"
         android:clickable="false"
         android:checked="false"
         android:focusable="false"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <!-- 名称行: 宽度由 cb 与删除按钮之间的实际间距决定,名称过长自动省略,
-         来源标记优先完整显示 -->
-    <LinearLayout
-        android:id="@+id/ll_name_row"
+    <!-- 名称行：cb 右侧 → 来自标签左侧 -->
+    <TextView
+        android:id="@+id/tv_name"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
-        app:layout_constraintEnd_toStartOf="@id/iv_pushpin"
+        android:layout_marginStart="12dp"
+        android:ellipsize="end"
+        android:marqueeRepeatLimit="marquee_forever"
+        android:singleLine="true"
+        android:textColor="@color/text_foreground"
+        android:textSize="15sp"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toBottomOf="@id/cb"
+        app:layout_constraintEnd_toStartOf="@id/tv_from"
         app:layout_constraintStart_toEndOf="@id/cb"
-        app:layout_constraintTop_toTopOf="parent">
+        app:layout_constraintTop_toTopOf="@id/cb"
+        tools:text="小账订阅小账订阅小账订阅" />
 
-        <TextView
-            android:id="@+id/tv_name"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:singleLine="true"
-            android:textSize="16dp"
-            android:ellipsize="end"
-            android:marqueeRepeatLimit="marquee_forever"
-            tools:text="小账订阅小账订阅小账订阅"
-            android:textColor="@color/text_foreground" />
+    <TextView
+        android:id="@+id/tv_builtin"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="6dp"
+        android:background="@drawable/bg_tag_builtin"
+        android:text="内置"
+        android:textColor="@color/accent_solid"
+        android:textSize="11dp"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="@id/tv_name"
+        app:layout_constraintStart_toEndOf="@id/tv_name"
+        app:layout_constraintTop_toTopOf="@id/tv_name"
+        tools:visibility="visible" />
 
-        <TextView
-            android:id="@+id/tv_builtin"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginLeft="6dp"
-            android:layout_marginStart="6dp"
-            android:layout_marginEnd="6dp"
-            android:layout_marginRight="6dp"
-            android:background="@drawable/bg_tag_builtin"
-            android:text="内置"
-            android:textColor="@color/accent_solid"
-            android:textSize="11dp"
-            android:visibility="gone"
-            tools:visibility="visible" />
+    <!-- 「来自：xxx」小标签（仅直播订阅显示）：半透明蓝圆角，名称行右侧 -->
+    <TextView
+        android:id="@+id/tv_from"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="6dp"
+        android:background="@drawable/bg_tag_from"
+        android:ellipsize="end"
+        android:paddingHorizontal="8dp"
+        android:paddingVertical="2dp"
+        android:singleLine="true"
+        android:textColor="@color/chip_blue_fg"
+        android:textSize="11sp"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="@id/cb"
+        app:layout_constraintEnd_toStartOf="@id/iv_pushpin"
+        app:layout_constraintTop_toTopOf="@id/cb"
+        tools:text="来自：订阅 6"
+        tools:visibility="visible" />
 
-        <TextView
-            android:id="@+id/tv_from"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:ellipsize="end"
-            android:singleLine="true"
-            android:maxWidth="150dp"
-            android:textColor="@color/text_sub_foreground"
-            android:textSize="11dp"
-            android:visibility="gone"
-            tools:text="来自：订阅 6"
-            tools:visibility="visible" />
-
-    </LinearLayout>
-
+    <!-- 地址：名称正下方，与名称左对齐 -->
     <TextView
         android:id="@+id/tv_url"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
+        android:layout_marginStart="12dp"
+        android:layout_marginTop="3dp"
         android:ellipsize="middle"
         android:singleLine="true"
-        tools:text="https://"
+        android:textColor="@color/text_sub_foreground"
+        android:textSize="12sp"
         app:layout_constraintEnd_toStartOf="@id/iv_pushpin"
         app:layout_constraintStart_toEndOf="@id/cb"
-        app:layout_constraintTop_toBottomOf="@id/ll_name_row" />
+        app:layout_constraintTop_toBottomOf="@id/cb"
+        tools:text="https://" />
 
     <ImageView
         android:id="@+id/iv_del"
-        android:layout_width="30dp"
-        android:layout_height="30dp"
-        android:paddingHorizontal="6dp"
+        android:layout_width="28dp"
+        android:layout_height="28dp"
+        android:background="@drawable/bg_del_circle"
+        android:padding="7dp"
         android:src="@drawable/dkplayer_ic_action_close"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:tint="@color/red"/>
+        app:tint="@color/chip_red_fg"/>
 
     <ImageView
         android:id="@+id/iv_pushpin"
-        android:layout_width="30dp"
-        android:layout_height="30dp"
-        android:paddingHorizontal="6dp"
+        android:layout_width="28dp"
+        android:layout_height="28dp"
+        android:layout_marginEnd="6dp"
+        android:padding="6dp"
         android:src="@drawable/ic_pushpin"
         android:visibility="gone"
         app:layout_constraintEnd_toStartOf="@id/iv_del"
         app:layout_constraintTop_toTopOf="parent"
-        app:tint="@color/red"
+        app:tint="@color/chip_red_fg"
         tools:visibility="visible"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

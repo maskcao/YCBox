@@ -38,10 +38,11 @@ public class SubscriptionAdapter extends BaseQuickAdapter<Subscription, BaseView
     protected void convert(BaseViewHolder helper, Subscription item) {
         // 内置源的地址是 builtin:// 协议，配置打包在 APK 里，断网也能加载
         boolean isBuiltin = BuiltinConfig.isBuiltin(item.getUrl());
+        boolean checked = item.isChecked();
 
         helper.setText(R.id.tv_name,item.getName())
         .setText(R.id.tv_url,item.getUrl())
-        .setChecked(R.id.cb,item.isChecked())
+        .setChecked(R.id.cb,checked)
         .setVisible(R.id.iv_pushpin,item.isTop())
         .setVisible(R.id.tv_builtin,isBuiltin);
 
@@ -57,20 +58,9 @@ public class SubscriptionAdapter extends BaseQuickAdapter<Subscription, BaseView
         helper.getView(R.id.iv_del).setVisibility(isBuiltin ? View.INVISIBLE : View.VISIBLE);
         helper.addOnClickListener(R.id.iv_del);
 
-        // 名称行/地址行右边该让给谁：
-        //   置顶 -> 让给图钉(否则「内置」标签和图钉会叠在一起)
-        //   未置顶 -> 让到删除按钮为止(GONE 的图钉仍按 30dp 占位，会白白空出一截)
-        bindRightAnchor(helper.getView(R.id.ll_name_row), item.isTop());
-        bindRightAnchor(helper.getView(R.id.tv_url), item.isTop());
-    }
-
-    private void bindRightAnchor(View view, boolean toPushpin) {
-        if (view.getLayoutParams() instanceof ConstraintLayout.LayoutParams) {
-            ConstraintLayout.LayoutParams lp = (ConstraintLayout.LayoutParams) view.getLayoutParams();
-            lp.endToStart = toPushpin ? R.id.iv_pushpin : R.id.iv_del;
-            lp.endToEnd = ConstraintLayout.LayoutParams.UNSET;
-            view.setLayoutParams(lp);
-        }
+        // 选中态（参考样式）：卡片加 accent 描边、名称变为 accent 色，未选中为正文色
+        helper.itemView.setBackgroundResource(checked ? R.drawable.bg_card_selected : R.drawable.bg_card_rounded);
+        helper.setTextColor(R.id.tv_name, ColorUtils.getColor(checked ? R.color.dock_accent : R.color.text_foreground));
     }
 
     /**

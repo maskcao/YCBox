@@ -56,6 +56,8 @@
     <color name="chip_green_bg">#3300897B</color>
     <color name="chip_purple_fg">#FF673AB7</color>
     <color name="chip_purple_bg">#33673AB7</color>
+    <!-- 订阅条目圆形单选未选中的圆环色（浅色深灰环 / 夜间浅灰环） -->
+    <color name="radio_ring">#FF9E9EA3</color>
     <color name="color_6200EE">#6200EE</color>
     <color name="color_3700B3">#3700B3</color>
     <color name="color_03DAC5">#FF03DAC5</color>
