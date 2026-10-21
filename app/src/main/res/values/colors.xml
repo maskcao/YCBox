@@ -110,6 +110,6 @@
     <!-- 底部导航栏背景：半透明，让壁纸从导航栏透出来 -->
     <color name="dock_bg">#00000000</color>
     <!-- 标题栏同样半透明，让壁纸从标题栏透出来 -->
-    <color name="title_bar_bg">#CCF6F6F8</color>
+    <color name="title_bar_bg">#FFE3E3E3</color>
 
 </resources>

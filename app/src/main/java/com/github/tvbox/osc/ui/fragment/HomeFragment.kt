@@ -495,12 +495,20 @@ class HomeFragment : BaseVbFragment<FragmentHomeBinding>() {
 
             // 查询完成后更新UI
             if (vodInfoList.isNotEmpty() && vodInfoList[0] != null) {
+                // 位置固定紧贴悬浮 dock 上方（无缝隙），弹窗高/宽与 dock 一致（高 76dp，宽=屏宽-2×14dp）：
+                // offsetY = 屏高 - 导航栏避让 - (dock 底边距 4dp + dock 76dp) - 弹窗高 76dp
+                val density = resources.displayMetrics.density
+                val decor = requireActivity().window.decorView
+                val insets = androidx.core.view.WindowInsetsCompat.toWindowInsetsCompat(decor.rootWindowInsets)
+                val navInset = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.navigationBars()).bottom
+                val offsetY = (ScreenUtils.getAppScreenHeight() - navInset -
+                        (4 + 76 + 76) * density).toInt()
                 XPopup.Builder(context)
                     .hasShadowBg(false)
                     .isDestroyOnDismiss(true)
                     .isCenterHorizontal(true)
                     .isTouchThrough(true)
-                    .offsetY(ScreenUtils.getAppScreenHeight() - 360)
+                    .offsetY(offsetY)
                     .asCustom(LastViewedDialog(requireContext(), vodInfoList[0]))
                     .show()
                     .delayDismiss(4000)

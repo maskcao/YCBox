@@ -1,18 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- 「上次看到」提示：高度与悬浮 dock 一致（76dp），宽度与 dock 一致（左右各 14dp 边距） -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:paddingHorizontal="30dp"
+    android:layout_height="76dp"
+    android:paddingHorizontal="14dp"
     xmlns:tools="http://schemas.android.com/tools">
 
     <TextView
         android:id="@+id/tv"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
         android:gravity="center"
         android:background="@drawable/bg_last_viewed_popup"
         android:paddingHorizontal="18dp"
-        android:paddingVertical="16dp"
         android:textSize="16sp"
         android:textColor="@color/white"
         android:drawableRight="@drawable/ic_play"

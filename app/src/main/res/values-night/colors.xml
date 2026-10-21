@@ -34,5 +34,5 @@
     <!-- 夜间：遮罩与导航栏用半透明黑，避免壁纸太亮影响文字 -->
     <color name="wallpaper_scrim">#B3000000</color>
     <color name="dock_bg">#00000000</color>
-    <color name="title_bar_bg">#CC141418</color>
+    <color name="title_bar_bg">#FF292929</color>
 </resources>

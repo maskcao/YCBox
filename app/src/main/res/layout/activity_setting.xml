@@ -10,9 +10,10 @@
         android:id="@+id/title_bar"
         android:layout_width="match_parent"
         android:layout_height="45dp"
+        android:background="@color/title_bar_bg"
         app:title="设置"
         app:titleStyle="bold"
-        app:titleColor="@color/black"
+        app:titleColor="@color/text_foreground"
         app:lineVisible="false"/>
 
     <ScrollView
