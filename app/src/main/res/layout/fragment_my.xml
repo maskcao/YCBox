@@ -1,369 +1,404 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- 「我的」页：参考样式重构 —— 标题+版本+应用图标头部、常用功能两列磁贴、设置与更多分组卡片 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
+    android:layout_height="match_parent"
     android:orientation="vertical">
 
-    <!-- 壁纸是整页背景，由 MainActivity 的 ivWallpaper 统一铺，这里不再单独放图 -->
+    <!-- 头部：应用名 + 版本号，右侧应用图标 -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="40dp"
-        android:padding="20dp">
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingHorizontal="20dp"
+        android:paddingTop="18dp"
+        android:paddingBottom="10dp">
 
-        <TextView
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_gravity="bottom"
-            android:layout_marginLeft="20dp"
-            android:layout_marginBottom="4dp"
-            android:text="@string/app_name"
-            android:textColor="@color/text_foreground"
-            android:textSize="22sp" />
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/app_name"
+                android:textColor="@color/text_foreground"
+                android:textSize="24sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tv_version"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:textColor="@color/text_sub_foreground"
+                android:textSize="12sp"
+                tools:text="v1.1.1" />
+        </LinearLayout>
+
+        <ImageView
+            android:layout_width="46dp"
+            android:layout_height="46dp"
+            android:contentDescription="@string/app_name"
+            android:src="@drawable/app_icon" />
     </LinearLayout>
 
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:layout_margin="20dp"
-        android:background="@drawable/bg_card_outline"
-        android:scrollbars="none"
-        >
+        android:clipToPadding="false"
+        android:paddingBottom="96dp"
+        android:scrollbars="none">
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:divider="@drawable/divider_line_subtle"
-            android:showDividers="middle"
-            android:paddingVertical="20dp">
+            android:paddingHorizontal="16dp">
+
+            <!-- 常用功能：两列功能磁贴 -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="4dp"
+                android:layout_marginTop="6dp"
+                android:layout_marginBottom="10dp"
+                android:text="常用功能"
+                android:textColor="@color/text_sub_foreground"
+                android:textSize="13sp" />
+
+            <GridLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:columnCount="2">
+
+                <LinearLayout
+                    android:id="@+id/llSubscription"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_columnWeight="1"
+                    android:layout_margin="4dp"
+                    android:background="@drawable/bg_card_rounded"
+                    android:foreground="?android:selectableItemBackground"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:padding="12dp">
+
+                    <ImageView
+                        android:layout_width="38dp"
+                        android:layout_height="38dp"
+                        android:background="@drawable/bg_chip_circle"
+                        android:backgroundTint="@color/chip_blue_bg"
+                        android:padding="9dp"
+                        android:src="@drawable/ic_database_48"
+                        app:tint="@color/chip_blue_fg" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="10dp"
+                        android:text="订阅管理"
+                        android:textColor="@color/text_foreground"
+                        android:textSize="14sp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/tileSearch"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_columnWeight="1"
+                    android:layout_margin="4dp"
+                    android:background="@drawable/bg_card_rounded"
+                    android:foreground="?android:selectableItemBackground"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:padding="12dp">
+
+                    <ImageView
+                        android:layout_width="38dp"
+                        android:layout_height="38dp"
+                        android:background="@drawable/bg_chip_circle"
+                        android:backgroundTint="@color/chip_orange_bg"
+                        android:padding="9dp"
+                        android:src="@drawable/ic_search_48"
+                        app:tint="@color/chip_orange_fg" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="10dp"
+                        android:text="搜索"
+                        android:textColor="@color/text_foreground"
+                        android:textSize="14sp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/llWallpaper"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_columnWeight="1"
+                    android:layout_margin="4dp"
+                    android:background="@drawable/bg_card_rounded"
+                    android:foreground="?android:selectableItemBackground"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:padding="12dp">
+
+                    <ImageView
+                        android:layout_width="38dp"
+                        android:layout_height="38dp"
+                        android:background="@drawable/bg_chip_circle"
+                        android:backgroundTint="@color/chip_red_bg"
+                        android:padding="9dp"
+                        android:src="@drawable/ic_wallpaper_48"
+                        app:tint="@color/chip_red_fg" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="10dp"
+                        android:text="换张壁纸"
+                        android:textColor="@color/text_foreground"
+                        android:textSize="14sp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/llTheme"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_columnWeight="1"
+                    android:layout_margin="4dp"
+                    android:background="@drawable/bg_card_rounded"
+                    android:foreground="?android:selectableItemBackground"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:padding="12dp">
+
+                    <ImageView
+                        android:layout_width="38dp"
+                        android:layout_height="38dp"
+                        android:background="@drawable/bg_chip_circle"
+                        android:backgroundTint="@color/chip_pink_bg"
+                        android:padding="9dp"
+                        android:src="@drawable/ic_theme_toggle"
+                        app:tint="@color/chip_pink_fg" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="10dp"
+                        android:text="主题切换"
+                        android:textColor="@color/text_foreground"
+                        android:textSize="14sp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/tvLocal"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_columnWeight="1"
+                    android:layout_margin="4dp"
+                    android:background="@drawable/bg_card_rounded"
+                    android:foreground="?android:selectableItemBackground"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:padding="12dp">
+
+                    <ImageView
+                        android:layout_width="38dp"
+                        android:layout_height="38dp"
+                        android:background="@drawable/bg_chip_circle"
+                        android:backgroundTint="@color/chip_green_bg"
+                        android:padding="9dp"
+                        android:src="@drawable/ic_local_video_48"
+                        app:tint="@color/chip_green_fg" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="10dp"
+                        android:text="本地视频"
+                        android:textColor="@color/text_foreground"
+                        android:textSize="14sp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/addrPlay"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_columnWeight="1"
+                    android:layout_margin="4dp"
+                    android:background="@drawable/bg_card_rounded"
+                    android:foreground="?android:selectableItemBackground"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:padding="12dp">
+
+                    <ImageView
+                        android:layout_width="38dp"
+                        android:layout_height="38dp"
+                        android:background="@drawable/bg_chip_circle"
+                        android:backgroundTint="@color/chip_purple_bg"
+                        android:padding="9dp"
+                        android:src="@drawable/ic_copyright_48"
+                        app:tint="@color/chip_purple_fg" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="10dp"
+                        android:text="播放链接"
+                        android:textColor="@color/text_foreground"
+                        android:textSize="14sp" />
+                </LinearLayout>
+            </GridLayout>
+
+            <!-- 设置与更多 -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="4dp"
+                android:layout_marginTop="16dp"
+                android:layout_marginBottom="10dp"
+                android:text="设置与更多"
+                android:textColor="@color/text_sub_foreground"
+                android:textSize="13sp" />
 
             <LinearLayout
-                android:id="@+id/llSubscription"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:paddingVertical="16dp"
-                android:paddingHorizontal="24dp"
-                android:foreground="?android:selectableItemBackground"
-                >
+                android:background="@drawable/bg_card_rounded"
+                android:divider="@drawable/divider_line_subtle"
+                android:orientation="vertical"
+                android:showDividers="middle"
+                android:paddingVertical="4dp">
 
-                <ImageView
-                    android:layout_width="28dp"
-                    android:layout_height="28dp"
-                    android:layout_gravity="center"
-                    android:src="@drawable/ic_database_48" />
-
-                <TextView
-                    android:layout_width="wrap_content"
+                <LinearLayout
+                    android:id="@+id/tvSetting"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_gravity="center"
-                    android:layout_marginLeft="20dp"
-                    android:focusable="false"
-                    android:focusableInTouchMode="false"
-                    android:gravity="center"
-                    android:text="订阅管理"
-                    android:textAlignment="gravity"
-                    android:textColor="@color/text_foreground"
-                    android:textSize="16sp" />
+                    android:foreground="?android:selectableItemBackground"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="16dp"
+                    android:paddingVertical="14dp">
 
-                <Space
-                    android:layout_width="0dp"
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_settings"
+                        app:tint="@color/text_foreground" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="14dp"
+                        android:text="设置"
+                        android:textColor="@color/text_foreground"
+                        android:textSize="15sp" />
+
+                    <Space
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1" />
+
+                    <ImageView
+                        android:layout_width="22dp"
+                        android:layout_height="22dp"
+                        android:alpha="0.75"
+                        android:src="@drawable/icon_pre"
+                        app:tint="@color/text_foreground" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/llThemeRow"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1" />
+                    android:foreground="?android:selectableItemBackground"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="16dp"
+                    android:paddingVertical="14dp">
 
-                <ImageView
-                    android:layout_width="26dp"
-                    android:layout_height="26dp"
-                    android:layout_gravity="center"
-                    android:alpha="0.75"
-                    android:src="@drawable/icon_pre"
-                    app:tint="@color/text_foreground" />
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_theme_toggle"
+                        app:tint="@color/text_foreground" />
 
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="14dp"
+                        android:text="主题切换"
+                        android:textColor="@color/text_foreground"
+                        android:textSize="15sp" />
+
+                    <Space
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1" />
+
+                    <TextView
+                        android:id="@+id/tvTheme"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="跟随系统"
+                        android:textColor="@color/text_sub_foreground"
+                        android:textSize="13sp" />
+
+                    <ImageView
+                        android:layout_width="22dp"
+                        android:layout_height="22dp"
+                        android:layout_marginStart="6dp"
+                        android:alpha="0.75"
+                        android:src="@drawable/icon_pre"
+                        app:tint="@color/text_foreground" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/llAbout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:foreground="?android:selectableItemBackground"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="16dp"
+                    android:paddingVertical="14dp">
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_about_48"
+                        app:tint="@color/text_foreground" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="14dp"
+                        android:text="关于"
+                        android:textColor="@color/text_foreground"
+                        android:textSize="15sp" />
+
+                    <Space
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1" />
+
+                    <ImageView
+                        android:layout_width="22dp"
+                        android:layout_height="22dp"
+                        android:alpha="0.75"
+                        android:src="@drawable/icon_pre"
+                        app:tint="@color/text_foreground" />
+                </LinearLayout>
             </LinearLayout>
-
-
-                                                <LinearLayout
-                android:id="@+id/tvLocal"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:paddingVertical="16dp"
-                android:paddingHorizontal="24dp"
-                android:foreground="?android:selectableItemBackground">
-
-                <ImageView
-                    android:layout_width="28dp"
-                    android:layout_height="28dp"
-                    android:layout_gravity="center"
-                    android:src="@drawable/ic_local_video_48" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center"
-                    android:layout_marginLeft="20dp"
-                    android:focusable="false"
-                    android:focusableInTouchMode="false"
-                    android:gravity="center"
-                    android:text="本地视频"
-                    android:textAlignment="gravity"
-                    android:textColor="@color/text_foreground"
-                    android:textSize="16sp" />
-
-                <Space
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1" />
-
-                <ImageView
-                    android:layout_width="26dp"
-                    android:layout_height="26dp"
-                    android:layout_gravity="center"
-                    android:alpha="0.75"
-                    android:src="@drawable/icon_pre"
-                    app:tint="@color/text_foreground" />
-
-            </LinearLayout>
-
-            <LinearLayout
-                android:id="@+id/addrPlay"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:paddingVertical="16dp"
-                android:paddingHorizontal="24dp"
-                android:foreground="?android:selectableItemBackground"
-                >
-
-                <ImageView
-                    android:layout_width="28dp"
-                    android:layout_height="28dp"
-                    android:layout_gravity="center"
-                    android:src="@drawable/ic_copyright_48" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center"
-                    android:layout_marginLeft="20dp"
-                    android:focusable="false"
-                    android:focusableInTouchMode="false"
-                    android:gravity="center"
-                    android:text="播放链接"
-                    android:textAlignment="gravity"
-                    android:textColor="@color/text_foreground"
-                    android:textSize="16sp" />
-
-                <Space
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1" />
-
-                <ImageView
-                    android:layout_width="26dp"
-                    android:layout_height="26dp"
-                    android:layout_gravity="center"
-                    android:alpha="0.75"
-                    android:src="@drawable/icon_pre"
-                    app:tint="@color/text_foreground" />
-
-            </LinearLayout>
-
-            <LinearLayout
-                android:id="@+id/llAbout"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:paddingVertical="16dp"
-                android:paddingHorizontal="24dp"
-                android:foreground="?android:selectableItemBackground">
-
-                <ImageView
-                    android:layout_width="28dp"
-                    android:layout_height="28dp"
-                    android:layout_gravity="center"
-                    android:src="@drawable/ic_about_48" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center"
-                    android:layout_marginLeft="20dp"
-                    android:focusable="false"
-                    android:focusableInTouchMode="false"
-                    android:gravity="center"
-                    android:text="关于"
-                    android:textAlignment="gravity"
-                    android:textColor="@color/text_foreground"
-                    android:textSize="16sp" />
-
-                <Space
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1" />
-
-                <ImageView
-                    android:layout_width="26dp"
-                    android:layout_height="26dp"
-                    android:layout_gravity="center"
-                    android:alpha="0.75"
-                    android:src="@drawable/icon_pre"
-                    app:tint="@color/text_foreground" />
-
-            </LinearLayout>
-
-            <LinearLayout
-                android:id="@+id/llWallpaper"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:paddingVertical="16dp"
-                android:paddingHorizontal="24dp"
-                android:foreground="?android:selectableItemBackground">
-
-                <ImageView
-                    android:layout_width="28dp"
-                    android:layout_height="28dp"
-                    android:layout_gravity="center"
-                    android:src="@drawable/ic_wallpaper_48"
-                    app:tint="@color/text_foreground" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center"
-                    android:layout_marginLeft="20dp"
-                    android:text="换张壁纸"
-                    android:textColor="@color/text_foreground"
-                    android:textSize="16sp" />
-
-                <Space
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1" />
-
-                <ImageView
-                    android:layout_width="26dp"
-                    android:layout_height="26dp"
-                    android:layout_gravity="center"
-                    android:alpha="0.75"
-                    android:src="@drawable/icon_pre"
-                    app:tint="@color/text_foreground" />
-
-            </LinearLayout>
-
-            <LinearLayout
-                android:id="@+id/llTheme"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:paddingVertical="16dp"
-                android:paddingHorizontal="24dp"
-                android:foreground="?android:selectableItemBackground">
-
-                <ImageView
-                    android:layout_width="28dp"
-                    android:layout_height="28dp"
-                    android:layout_gravity="center"
-                    android:src="@drawable/ic_theme_toggle"
-                    app:tint="@color/text_foreground" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center"
-                    android:layout_marginLeft="20dp"
-                    android:focusable="false"
-                    android:focusableInTouchMode="false"
-                    android:gravity="center"
-                    android:text="主题切换"
-                    android:textAlignment="gravity"
-                    android:textColor="@color/text_foreground"
-                    android:textSize="16sp" />
-
-                <Space
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1" />
-
-                <TextView
-                    android:id="@+id/tvTheme"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center"
-                    android:text="跟随系统"
-                    android:textColor="@color/text_sub_foreground"
-                    android:textSize="14sp" />
-
-                <ImageView
-                    android:layout_width="26dp"
-                    android:layout_height="26dp"
-                    android:layout_gravity="center"
-                    android:alpha="0.75"
-                    android:src="@drawable/icon_pre"
-                    app:tint="@color/text_foreground" />
-
-            </LinearLayout>
-
-            <LinearLayout
-                android:id="@+id/tvSetting"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:paddingVertical="16dp"
-                android:paddingHorizontal="24dp"
-                android:foreground="?android:selectableItemBackground">
-
-                <ImageView
-                    android:layout_width="28dp"
-                    android:layout_height="28dp"
-                    android:layout_gravity="center"
-                    android:src="@drawable/ic_settings" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center"
-                    android:layout_marginLeft="20dp"
-                    android:focusable="false"
-                    android:focusableInTouchMode="false"
-                    android:gravity="center"
-                    android:text="设置"
-                    android:textAlignment="gravity"
-                    android:textColor="@color/text_foreground"
-                    android:textSize="16sp" />
-
-                <Space
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1" />
-
-                <ImageView
-                    android:layout_width="26dp"
-                    android:layout_height="26dp"
-                    android:layout_gravity="center"
-                    android:alpha="0.75"
-                    android:src="@drawable/icon_pre"
-                    app:tint="@color/text_foreground" />
-
-            </LinearLayout>
-
         </LinearLayout>
-
     </ScrollView>
-
-    <TextView
-        android:id="@+id/tv_version"
-        android:textSize="11sp"
-        tools:text="v0.01"
-        android:paddingBottom="6dp"
-        android:layout_gravity="center_horizontal"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textColor="@color/gray_darker"
-        />
 </LinearLayout>
-

@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.view.View;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -16,6 +17,7 @@ import com.github.tvbox.osc.base.BaseLazyFragment;
 import com.github.tvbox.osc.base.BaseVbFragment;
 import com.github.tvbox.osc.databinding.FragmentMyBinding;
 import com.github.tvbox.osc.ui.activity.DetailActivity;
+import com.github.tvbox.osc.ui.activity.FastSearchActivity;
 import com.github.tvbox.osc.ui.activity.LiveActivity;
 import com.github.tvbox.osc.ui.activity.LocalPlayActivity;
 import com.github.tvbox.osc.ui.activity.MovieFoldersActivity;
@@ -112,6 +114,9 @@ public class MyFragment extends BaseVbFragment<FragmentMyBinding> {
 
         mBinding.llSubscription.setOnClickListener(v -> jumpActivity(SubscriptionActivity.class));
 
+        // 常用功能磁贴：搜索（快速搜索页）
+        mBinding.tileSearch.setOnClickListener(v -> jumpActivity(FastSearchActivity.class));
+
         mBinding.llAbout.setOnClickListener(v -> {
             new XPopup.Builder(mActivity)
                     .asCustom(new AboutDialog(mActivity))
@@ -159,7 +164,8 @@ public class MyFragment extends BaseVbFragment<FragmentMyBinding> {
      */
     private void initThemeEntry() {
         mBinding.tvTheme.setText(ThemeHelper.getName(ThemeHelper.getTag()));
-        mBinding.llTheme.setOnClickListener(v -> {
+        // 主题磁贴（常用功能）与设置行两个入口都打开同一个三选弹窗
+        View.OnClickListener openThemeDialog = v -> {
             FastClickCheckUtil.check(v);
             int current = ThemeHelper.getTag();
             ArrayList<String> modes = new ArrayList<>();
@@ -186,7 +192,9 @@ public class MyFragment extends BaseVbFragment<FragmentMyBinding> {
                 }
             }, SelectDialogAdapter.stringDiff, modes, current);
             dialog.show();
-        });
+        };
+        mBinding.llTheme.setOnClickListener(openThemeDialog);
+        mBinding.llThemeRow.setOnClickListener(openThemeDialog);
     }
 
     private void showPermissionTipPopup(){

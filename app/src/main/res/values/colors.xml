@@ -43,6 +43,19 @@
     <color name="orange">#FFD45520</color>
     <!-- dock 选中态取色（方块背景与选中标签），用户指定 #C68500 -->
     <color name="dock_accent">#C68500</color>
+    <!-- 「我的」页功能磁贴芯片配色：bg 为半透明同色系底，fg 为图标色 -->
+    <color name="chip_blue_fg">#FF2962FF</color>
+    <color name="chip_blue_bg">#332962FF</color>
+    <color name="chip_orange_fg">#FFF57C00</color>
+    <color name="chip_orange_bg">#33F57C00</color>
+    <color name="chip_red_fg">#FFE53935</color>
+    <color name="chip_red_bg">#33E53935</color>
+    <color name="chip_pink_fg">#FFD81B60</color>
+    <color name="chip_pink_bg">#33D81B60</color>
+    <color name="chip_green_fg">#FF00897B</color>
+    <color name="chip_green_bg">#3300897B</color>
+    <color name="chip_purple_fg">#FF673AB7</color>
+    <color name="chip_purple_bg">#33673AB7</color>
     <color name="color_6200EE">#6200EE</color>
     <color name="color_3700B3">#3700B3</color>
     <color name="color_03DAC5">#FF03DAC5</color>
