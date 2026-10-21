@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 自绘 dock 的单个条目：图标（选中时挂橙色圆角方块底）+ 小号标签，整体居中 -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="0dp"
+    android:layout_height="match_parent"
+    android:layout_weight="1"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:clickable="true"
+    android:focusable="true">
+
+    <ImageView
+        android:id="@+id/dock_icon"
+        android:layout_width="26dp"
+        android:layout_height="26dp"
+        android:scaleType="fitCenter"/>
+
+    <TextView
+        android:id="@+id/dock_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="1dp"
+        android:textSize="12sp"/>
+</LinearLayout>

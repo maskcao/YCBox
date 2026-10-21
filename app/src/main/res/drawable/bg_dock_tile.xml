@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- dock 选中项图标背后的橙色圆角方块（#C68500） -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="@color/dock_accent"/>
+    <corners android:radius="9dp"/>
+</shape>

@@ -3,7 +3,7 @@
 
     <item
         android:id="@+id/navigation_home"
-        android:icon="@drawable/ic_home"
+        android:icon="@drawable/nav_ic_home"
         android:orderInCategory="0"
         android:title="首页"/>
 
@@ -15,13 +15,13 @@
 
     <item
         android:id="@+id/navigation_history_collect"
-        android:icon="@drawable/ic_history_48"
+        android:icon="@drawable/nav_ic_history"
         android:orderInCategory="2"
-        android:title="历史收藏"/>
+        android:title="历史/收藏"/>
 
     <item
         android:id="@+id/navigation_dashboard"
-        android:icon="@drawable/ic_my"
+        android:icon="@drawable/nav_ic_my"
         android:orderInCategory="3"
         android:title="我的"/>
 

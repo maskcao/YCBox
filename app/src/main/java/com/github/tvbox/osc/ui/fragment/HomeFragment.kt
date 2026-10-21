@@ -437,6 +437,20 @@ class HomeFragment : BaseVbFragment<FragmentHomeBinding>() {
                 override fun getDisplay(source: SourceBean?): String {
                     return if (source == null) "" else source.name
                 }
+
+                /**
+                 * 站点封面：配置里写了 pic/logo/image/cover 就用网络图，
+                 * 否则退回名称首字头像（之前这个列表只有纯文字，看着很干）。
+                 */
+                override fun getPic(source: SourceBean?): String? {
+                    return source?.pic
+                }
+
+                override fun getAvatarText(source: SourceBean?): String? {
+                    val name = source?.name ?: return null
+                    val first = name.trim().firstOrNull() ?: return null
+                    return first.toString()
+                }
             }, object : DiffUtil.ItemCallback<SourceBean>() {
                 override fun areItemsTheSame(oldItem: SourceBean, newItem: SourceBean): Boolean {
                     return oldItem === newItem

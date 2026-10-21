@@ -455,6 +455,13 @@ public class ApiConfig {
             sb.setPlayerType(DefaultConfig.safeJsonInt(obj, "playerType", -1));
             sb.setCategories(DefaultConfig.safeJsonStringList(obj, "categories"));
             sb.setClickSelector(DefaultConfig.safeJsonString(obj, "click", ""));
+            // 站点封面（可选字段）：上游 TVBox 没有这个字段，这里扩展出来，
+            // 让「请选择首页数据源」弹窗能显示站点图标；没有则由列表用首字头像兜底
+            String pic = DefaultConfig.safeJsonString(obj, "pic", "");
+            if (TextUtils.isEmpty(pic)) pic = DefaultConfig.safeJsonString(obj, "logo", "");
+            if (TextUtils.isEmpty(pic)) pic = DefaultConfig.safeJsonString(obj, "image", "");
+            if (TextUtils.isEmpty(pic)) pic = DefaultConfig.safeJsonString(obj, "cover", "");
+            sb.setPic(pic);
             if (firstSite == null)
                 firstSite = sb;
             sourceBeanList.put(siteKey, sb);

@@ -53,12 +53,13 @@ class SettingActivity : BaseVbActivity<ActivitySettingBinding>() {
 
         mBinding.tvDns.text = OkGoHelper.dnsHttpsList[Hawk.get(HawkConfig.DOH_URL, 0)]
         mBinding.tvHomeRec.text = getHomeRecName(Hawk.get(HawkConfig.HOME_REC, 0))
-        mBinding.tvDockItems.text = getDockSummary()
+        // 「底部导航栏」右侧不再显示摘要文字（入口显隐本身就在弹窗里勾选），
+        // 整行保留点击打开配置弹窗
         mBinding.llDockItems.setOnClickListener { v: View? ->
             FastClickCheckUtil.check(v)
             XPopup.Builder(mContext)
                 .isDarkTheme(Utils.isDarkTheme())
-                .asCustom(DockItemsDialog(this) { mBinding.tvDockItems.text = getDockSummary() })
+                .asCustom(DockItemsDialog(this))
                 .show()
         }
         mBinding.tvHistoryNum.text =

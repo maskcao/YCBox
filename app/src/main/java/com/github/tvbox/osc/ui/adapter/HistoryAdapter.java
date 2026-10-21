@@ -17,6 +17,7 @@ import com.github.tvbox.osc.bean.VodInfo;
 import com.github.tvbox.osc.picasso.RoundTransformation;
 import com.github.tvbox.osc.util.DefaultConfig;
 import com.github.tvbox.osc.util.MD5;
+import com.github.tvbox.osc.util.ThumbLoader;
 import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
@@ -55,15 +56,7 @@ public class HistoryAdapter extends BaseQuickAdapter<VodInfo, BaseViewHolder> {
         helper.setText(R.id.tvName, item.name);
         // helper.setText(R.id.tvActor, item.actor);
         ImageView ivThumb = helper.getView(R.id.ivThumb);
-        //由于部分电视机使用glide报错
-        if (!TextUtils.isEmpty(item.pic)) {
-            Picasso.get()
-                    .load(DefaultConfig.checkReplaceProxy(item.pic))
-                    .placeholder(R.drawable.img_loading_placeholder)
-                    .error(R.drawable.img_loading_placeholder)
-                    .into(ivThumb);
-        } else {
-            ivThumb.setImageResource(R.drawable.img_loading_placeholder);
-        }
+        //统一走 ThumbLoader：data: base64 封面 Picasso 加载不了
+        ThumbLoader.load(ivThumb, item.pic);
     }
 }

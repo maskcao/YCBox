@@ -171,5 +171,11 @@
         <item name="android:textColor">@color/text_foreground</item>
     </style>
 
+    <!-- dock 标签文字：参考样式的小号标签 -->
+    <style name="DockLabelText" parent="TextAppearance.MaterialComponents.Caption">
+        <item name="android:textSize">12sp</item>
+        <item name="android:textStyle">normal</item>
+    </style>
+
 
 </resources>

@@ -22,6 +22,8 @@ public class RefreshEvent {
     public static final int TYPE_FILTER_CHANGE = 13;
     public static final int TYPE_BATTERY_CHANGE = 14;
     public static final int TYPE_REFRESH_NOTIFY = 15;
+    /** 壁纸被换掉/删除，需要刷新 MainActivity 的全局背景层 */
+    public static final int TYPE_WALLPAPER = 16;
 
     public int type;
     public Object obj;

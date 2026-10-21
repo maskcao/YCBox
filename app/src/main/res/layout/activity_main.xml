@@ -1,26 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<!-- 壁纸层由 BaseActivity 统一注入到 android.R.id.content，这里不再单独放。
+     dock 用 FrameLayout 悬浮在 ViewPager 内容之上，不再占据底部布局空间 -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/windowBackground"
-    android:orientation="vertical"
+    android:background="@android:color/transparent"
     tools:context=".ui.activity.MainActivity">
 
     <androidx.viewpager.widget.ViewPager
         android:id="@+id/vp"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"/>
+        android:layout_height="match_parent"/>
 
-    <com.google.android.material.bottomnavigation.BottomNavigationView
-        android:id="@+id/bottom_nav"
+    <!-- 悬浮药丸 dock：底色与「我的」页设置卡片一致（bg_surface），左右留边浮于内容上。
+         自绘条目（view_dock_item）：图标 44dp 明显大于 12sp 汉字，图标+文字整体居中 -->
+    <LinearLayout
+        android:id="@+id/dock_bar"
         android:layout_width="match_parent"
-        android:layout_height="56dp"
-        android:background="@color/bg_popup"
-        app:itemIconTint="@drawable/bottom_navigation_item_selector"
-        app:itemTextColor="@drawable/bottom_navigation_item_selector"
-        app:labelVisibilityMode="labeled"
-        app:menu="@menu/main_bottom_navigation" />
-</LinearLayout>
+        android:layout_height="68dp"
+        android:layout_gravity="bottom"
+        android:layout_marginStart="14dp"
+        android:layout_marginEnd="14dp"
+        android:layout_marginBottom="4dp"
+        android:background="@drawable/bg_dock_pill"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingVertical="6dp" />
+</FrameLayout>

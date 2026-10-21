@@ -64,6 +64,22 @@ public class HawkConfig {
     /** 主题切换后重启应用，标记下次启动落到「我的」页 */
     public static final String THEME_RELAUNCH_TO_MY = "theme_relaunch_to_my";
     /**
+     * 「我的」页壁纸：是否显示壁纸（换壁纸/选图后自动置 true，重置壁纸时置 false）
+     */
+    public static final String WALLPAPER_ON = "wallpaper_on";
+    /**
+     * 「我的」页壁纸：是否启用「壁纸虚化」（默认开；关闭时显示原图）
+     */
+    public static final String WALLPAPER_BLUR = "wallpaper_blur";
+    /**
+     * 虚化图对应的源壁纸修改时间，用于判断缓存的虚化图是否过期
+     */
+    public static final String WALLPAPER_BLUR_SRC_MTIME = "wallpaper_blur_src_mtime";
+    /**
+     * 「我的」页壁纸：本地文件绝对路径（下载或从相册选来的图片都存到 app 私有目录）
+     */
+    public static final String WALLPAPER_PATH = "wallpaper_path";
+    /**
      * 后台播放模式 0 关闭,1 开启,2 画中画
      */
     public static final String BACKGROUND_PLAY_TYPE = "background_play_type";

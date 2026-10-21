@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 换张壁纸弹窗 -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_bottom_dialog"
+    android:orientation="vertical"
+    android:paddingHorizontal="20dp"
+    android:paddingTop="22dp"
+    android:paddingBottom="18dp">
+
+    <TextView
+        android:id="@+id/tv_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="换张壁纸"
+        android:textColor="@color/text_foreground"
+        android:textSize="18sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:text="由当前订阅提供的随机壁纸，每次都可以不同"
+        android:textColor="@color/text_sub_foreground"
+        android:textSize="13sp" />
+
+    <!-- 壁纸虚化开关：开=背景壁纸做虚化处理，关=显示原图 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="壁纸虚化"
+            android:textColor="@color/text_foreground"
+            android:textSize="16sp" />
+
+        <Space
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1" />
+
+        <com.google.android.material.switchmaterial.SwitchMaterial
+            android:id="@+id/switch_wallpaper"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+    </LinearLayout>
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btn_random"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="18dp"
+        android:backgroundTint="@color/accent_solid"
+        android:text="随机壁纸"
+        android:textColor="@color/on_accent_text"
+        android:textSize="16sp"
+        app:cornerRadius="@dimen/common_corners"
+        xmlns:app="http://schemas.android.com/apk/res-auto" />
+
+    <!-- 当前订阅没有提供壁纸地址时的提示 -->
+    <TextView
+        android:id="@+id/tv_tip"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:gravity="center"
+        android:textColor="@color/warn"
+        android:textSize="13sp"
+        android:visibility="gone"
+        tools:text="当前订阅未提供壁纸地址"
+        tools:visibility="visible" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="18dp"
+        android:orientation="horizontal">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_from_gallery"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="6dp"
+            android:layout_weight="1"
+            android:text="从相册"
+            android:textColor="@color/text_foreground"
+            android:textSize="12sp"
+            app:cornerRadius="@dimen/common_corners"
+            app:strokeColor="@color/stroke_subtle"
+            xmlns:app="http://schemas.android.com/apk/res-auto" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_save_gallery"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="6dp"
+            android:layout_weight="1"
+            android:text="保存到相册"
+            android:textColor="@color/text_foreground"
+            android:textSize="12sp"
+            app:cornerRadius="@dimen/common_corners"
+            app:strokeColor="@color/stroke_subtle"
+            xmlns:app="http://schemas.android.com/apk/res-auto" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_reset"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="6dp"
+            android:layout_weight="1"
+            android:text="重置壁纸"
+            android:textColor="@color/text_foreground"
+            android:textSize="12sp"
+            app:cornerRadius="@dimen/common_corners"
+            app:strokeColor="@color/stroke_subtle"
+            xmlns:app="http://schemas.android.com/apk/res-auto" />
+    </LinearLayout>
+
+</LinearLayout>

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- dock 图标 tint：选中白色（落在橙色方块上），未选中跟主题正文色（浅色深/夜间浅） -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:color="#FFFFFFFF" android:state_checked="true"/>
+    <item android:color="@color/text_foreground"/>
+</selector>

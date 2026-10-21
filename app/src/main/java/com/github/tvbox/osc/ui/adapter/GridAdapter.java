@@ -12,6 +12,7 @@ import com.github.tvbox.osc.bean.Movie;
 import com.github.tvbox.osc.picasso.RoundTransformation;
 import com.github.tvbox.osc.util.DefaultConfig;
 import com.github.tvbox.osc.util.MD5;
+import com.github.tvbox.osc.util.ThumbLoader;
 import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
@@ -49,16 +50,7 @@ public class GridAdapter extends BaseQuickAdapter<Movie.Video, BaseViewHolder> {
         }
         helper.setText(R.id.tvName, item.name);
         ImageView ivThumb = helper.getView(R.id.ivThumb);
-        //由于部分电视机使用glide报错
-        if (!TextUtils.isEmpty(item.pic)) {
-            item.pic=item.pic.trim();
-            Picasso.get()
-                    .load(DefaultConfig.checkReplaceProxy(item.pic))
-                    .placeholder(R.drawable.img_loading_placeholder)
-                    .error(R.drawable.img_loading_placeholder)
-                    .into(ivThumb);
-        } else {
-            ivThumb.setImageResource(R.drawable.img_loading_placeholder);
-        }
+        //统一走 ThumbLoader：jar 爬虫给的封面可能是 data: base64，Picasso 不认
+        ThumbLoader.load(ivThumb, item.pic);
     }
 }

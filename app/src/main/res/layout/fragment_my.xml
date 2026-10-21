@@ -6,6 +6,7 @@
     android:layout_height="wrap_content"
     android:orientation="vertical">
 
+    <!-- 壁纸是整页背景，由 MainActivity 的 ivWallpaper 统一铺，这里不再单独放图 -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -196,6 +197,46 @@
                     android:gravity="center"
                     android:text="关于"
                     android:textAlignment="gravity"
+                    android:textColor="@color/text_foreground"
+                    android:textSize="16sp" />
+
+                <Space
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1" />
+
+                <ImageView
+                    android:layout_width="26dp"
+                    android:layout_height="26dp"
+                    android:layout_gravity="center"
+                    android:alpha="0.75"
+                    android:src="@drawable/icon_pre"
+                    app:tint="@color/text_foreground" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/llWallpaper"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:paddingVertical="16dp"
+                android:paddingHorizontal="24dp"
+                android:foreground="?android:selectableItemBackground">
+
+                <ImageView
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/ic_wallpaper_48"
+                    app:tint="@color/text_foreground" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:layout_marginLeft="20dp"
+                    android:text="换张壁纸"
                     android:textColor="@color/text_foreground"
                     android:textSize="16sp" />
 

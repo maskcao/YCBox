@@ -2,7 +2,11 @@ package com.github.tvbox.osc.ui.fragment;
 
 import android.content.Intent;
 import android.net.Uri;
+import android.os.Bundle;
 import android.text.TextUtils;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.blankj.utilcode.util.AppUtils;
 import com.blankj.utilcode.util.ClipboardUtils;
@@ -21,10 +25,14 @@ import com.github.tvbox.osc.ui.dialog.AboutDialog;
 import com.github.tvbox.osc.ui.adapter.SelectDialogAdapter;
 import com.github.tvbox.osc.ui.adapter.SelectDialogAdapter.SelectDialogInterface;
 import com.github.tvbox.osc.ui.dialog.SelectDialog;
+import com.github.tvbox.osc.ui.dialog.WallpaperDialog;
+import com.github.tvbox.osc.event.RefreshEvent;
 import com.github.tvbox.osc.util.FastClickCheckUtil;
 import com.github.tvbox.osc.util.HawkConfig;
 import com.github.tvbox.osc.util.ThemeHelper;
 import com.github.tvbox.osc.util.Utils;
+import com.github.tvbox.osc.util.WallpaperHelper;
+import org.greenrobot.eventbus.EventBus;
 import com.orhanobut.hawk.Hawk;
 import com.hjq.permissions.OnPermissionCallback;
 import com.hjq.permissions.Permission;
@@ -43,11 +51,38 @@ import java.util.List;
  */
 public class MyFragment extends BaseVbFragment<FragmentMyBinding> {
 
+    /** 打开壁纸弹窗后需要等选图结果，暂存一下 */
+    private WallpaperDialog wallpaperDialog;
+    /**
+     * 选图 launcher。必须用 registerForActivityResult 而不是
+     * Activity.startActivityForResult —— 后者的结果只在 Activity 层回到
+     * Fragment.onActivityResult，ViewPager 里的 fragment 实测收不到。
+     */
+    private androidx.activity.result.ActivityResultLauncher<Intent> wallpaperPicker;
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        wallpaperPicker = registerForActivityResult(
+                new androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult(),
+                result -> {
+                    Intent data = result.getData();
+                    Uri uri = data == null ? null : data.getData();
+                    if (uri == null) {
+                        if (wallpaperDialog != null) wallpaperDialog.onPickedResult(false, "");
+                        return;
+                    }
+                    WallpaperHelper.onPicked(mContext, uri, (ok, msg) -> {
+                        if (wallpaperDialog != null) wallpaperDialog.onPickedResult(ok, msg);
+                    });
+                });
+    }
 
     @Override
     protected void init() {
         mBinding.tvVersion.setText("v"+ AppUtils.getAppVersionName());
 
+        initWallpaperEntry();
         initThemeEntry();
 
         mBinding.addrPlay.setOnClickListener(v ->{
@@ -82,6 +117,36 @@ public class MyFragment extends BaseVbFragment<FragmentMyBinding> {
                     .asCustom(new AboutDialog(mActivity))
                     .show();
         });
+    }
+
+    /**
+     * 「我的」页壁纸：顶部 ImageView 显示本地壁纸，菜单行打开换壁纸弹窗。
+     *
+     * <p>壁纸来源见 {@link com.github.tvbox.osc.util.WallpaperHelper}：
+     * 订阅配置的 wallpaper 地址（随机壁纸接口）或用户相册里的图。
+     */
+    /**
+     * 「我的」页壁纸入口：打开换壁纸弹窗。
+     *
+     * <p>壁纸本体铺在 MainActivity 的全局背景层（整页），所以这里不直接控制显示，
+     * 只负责发起事件让 MainActivity 刷新 —— 见 {@link com.github.tvbox.osc.util.WallpaperHelper}。
+     */
+    private void initWallpaperEntry() {
+        mBinding.llWallpaper.setOnClickListener(v -> {
+            FastClickCheckUtil.check(v);
+            wallpaperDialog = new WallpaperDialog(mActivity,
+                    () -> wallpaperPicker.launch(WallpaperHelper.buildPickImageIntent()),
+                    MyFragment::notifyWallpaperChanged);
+            new XPopup.Builder(mActivity)
+                    .isDarkTheme(Utils.isDarkTheme())
+                    .asCustom(wallpaperDialog)
+                    .show();
+        });
+    }
+
+    /** 通知 MainActivity 刷新全局壁纸 */
+    private static void notifyWallpaperChanged() {
+        EventBus.getDefault().post(new RefreshEvent(RefreshEvent.TYPE_WALLPAPER));
     }
 
     /**

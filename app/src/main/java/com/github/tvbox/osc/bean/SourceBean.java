@@ -16,6 +16,12 @@ public class SourceBean {
     private ArrayList<String> categories = null; // 分类&排序
     private int playerType; // 0 system 1 ikj 2 exo 10 mxplayer -1 以参数设置页面的为准
     private String clickSelector; // 需要点击播放的嗅探站点selector   ddrk.me;#id
+    /**
+     * 站点封面图（可选）。
+     * <p>配置 JSON 的 sites 条目里可以额外写 pic / logo / image / cover 字段，
+     * 用于「请选择首页数据源」弹窗里的站点图标；没写时列表用名称首字头像兜底。
+     */
+    private String pic;
 
     public String getKey() {
         return key;
@@ -112,4 +118,8 @@ public class SourceBean {
     public String getClickSelector() { return clickSelector; }
 
     public void setClickSelector(String clickSelector) { this.clickSelector = clickSelector; }
+
+    public String getPic() { return pic; }
+
+    public void setPic(String pic) { this.pic = pic; }
 }

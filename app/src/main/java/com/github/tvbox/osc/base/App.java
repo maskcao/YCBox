@@ -17,6 +17,7 @@ import com.github.tvbox.osc.util.BuiltinConfig;
 import com.github.tvbox.osc.util.EpgUtil;
 import com.github.tvbox.osc.util.FileUtils;
 import com.github.tvbox.osc.util.HawkConfig;
+import com.github.tvbox.osc.util.WallpaperHelper;
 import com.github.tvbox.osc.util.LOG;
 import com.github.tvbox.osc.util.OkGoHelper;
 import com.github.tvbox.osc.util.PlayerHelper;
@@ -74,6 +75,8 @@ public class App extends MultiDexApplication {
         FileUtils.cleanPlayerCache();
         initCrashConfig();
         Utils.initTheme();
+        // 预热壁纸到 Glide 内存缓存：首个页面首帧即可命中缓存，避免进二级页才现加载空白
+        WallpaperHelper.preload(this);
     }
 
     private void initParams() {

@@ -2,9 +2,13 @@ package com.github.tvbox.osc.ui.fragment
 
 import android.content.Intent
 import android.os.Bundle
+import android.view.Gravity
 import android.view.View
+import android.widget.TextView
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
+import com.angcyo.tablayout.DslTabLayout
+import com.blankj.utilcode.util.ConvertUtils
 import com.chad.library.adapter.base.BaseQuickAdapter
 import com.github.tvbox.osc.api.ApiConfig
 import com.github.tvbox.osc.base.BaseVbFragment
@@ -65,23 +69,36 @@ class HistoryCollectFragment : BaseVbFragment<FragmentHistoryCollectBinding>() {
 
         setupAdapters()
 
-        mBinding.tabLayout.addTab(mBinding.tabLayout.newTab().setText("观看历史"))
-        mBinding.tabLayout.addTab(mBinding.tabLayout.newTab().setText("收藏"))
-        // 显式选中第一个 Tab：addTab 的默认选中行为在部分 API 上不可靠
-        mBinding.tabLayout.getTabAt(0)?.select()
-        mBinding.tabLayout.addOnTabSelectedListener(object :
-            com.google.android.material.tabs.TabLayout.OnTabSelectedListener {
-            override fun onTabSelected(tab: com.google.android.material.tabs.TabLayout.Tab) {
-                switchTab(tab.position)
+        // 分类 tab 复用首页同款 DslTabLayout：紧凑左对齐 + 闪动指示条，
+        // 不再用 Material TabLayout 把两个 tab 撑满整行宽。
+        mBinding.tabLayout.configTabLayoutConfig {
+            onSelectViewChange = { _, selectViewList, _, _ ->
+                val tabView = selectViewList.firstOrNull()
+                if (tabView is TextView) {
+                    switchTab(if (tabView.text.toString() == "收藏") 1 else 0)
+                }
             }
-
-            override fun onTabUnselected(tab: com.google.android.material.tabs.TabLayout.Tab) {}
-            override fun onTabReselected(tab: com.google.android.material.tabs.TabLayout.Tab) {}
-        })
+        }
+        mBinding.tabLayout.addView(getTabTextView("历史"))
+        mBinding.tabLayout.addView(getTabTextView("收藏"))
+        mBinding.tabLayout.setCurrentItem(0, true, false)
 
         mBinding.ivClear.setOnClickListener { clearCurrentTab() }
 
         switchTab(0)
+    }
+
+    /** 与首页分类 tab 一致的 TextView（居中 + 左右留白） */
+    private fun getTabTextView(text: String): TextView {
+        val tv = TextView(mContext)
+        tv.text = text
+        tv.gravity = Gravity.CENTER
+        tv.setPadding(
+            ConvertUtils.dp2px(20f), ConvertUtils.dp2px(10f),
+            ConvertUtils.dp2px(20f), ConvertUtils.dp2px(10f)
+        )
+        tv.layoutParams = DslTabLayout.LayoutParams(-2, -2)
+        return tv
     }
 
     override fun onResume() {
@@ -171,9 +188,10 @@ class HistoryCollectFragment : BaseVbFragment<FragmentHistoryCollectBinding>() {
     private fun clearCurrentTab() {
         val isHistory = currentTab == 0
         val tip = if (isHistory) "确定清空全部历史记录?" else "确定清空全部收藏?"
+        // 参数顺序：第 3 个文案绑左按钮(取消)，第 4 个绑右按钮(清空)
         XPopup.Builder(mActivity)
             .isDarkTheme(Utils.isDarkTheme())
-            .asConfirm("提示", tip) {
+            .asConfirm("提示", tip, "取消", "清空", {
                 lifecycleScope.launch(Dispatchers.IO) {
                     if (isHistory) {
                         RoomDataManger.deleteVodRecordAll()
@@ -190,10 +208,12 @@ class HistoryCollectFragment : BaseVbFragment<FragmentHistoryCollectBinding>() {
                         showEmpty()
                     }
                 }
-            }.show()
+            }, null, false).show()
     }
 
     private fun switchTab(index: Int) {
+        // setCurrentItem 与首次显式调用可能重复触发，同一个 tab 且已挂 adapter 时直接跳过
+        if (index == currentTab && mBinding.mGridView.adapter != null) return
         currentTab = index
         mBinding.topTip.visibility = View.GONE
         mBinding.mGridView.adapter = if (index == 0) historyAdapter else collectAdapter

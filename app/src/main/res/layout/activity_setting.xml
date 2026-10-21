@@ -102,7 +102,9 @@
                     <TextView
                         android:id="@+id/tvDockItems"
                         android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"/>
+                        android:layout_height="wrap_content"
+                        android:visibility="gone"
+                        tools:text="首页 · 直播 · 历史 · 我的" />
 
                     <ImageView
                         android:layout_width="26dp"
