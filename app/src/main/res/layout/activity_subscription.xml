@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center_horizontal"
+    tools:context=".ui.activity.SubscriptionActivity">
+
+    <com.hjq.bar.TitleBar
+        android:id="@+id/title_bar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:title="订阅管理"
+        app:rightIcon="@drawable/ic_add_24"
+        >
+
+        <ImageView
+            android:id="@+id/iv_use_tip"
+            android:layout_width="wrap_content"
+            android:layout_height="20dp"
+            android:src="@drawable/ic_use_description_24"
+            android:layout_gravity="end|center_vertical"
+            android:paddingLeft="20dp"
+            android:layout_marginRight="50dp"/>
+    </com.hjq.bar.TitleBar>
+
+    <!-- 配置订阅 / 直播订阅 分段切换 -->
+    <LinearLayout
+        android:id="@+id/tab_switch"
+        android:layout_width="match_parent"
+        android:layout_height="36dp"
+        android:layout_marginHorizontal="10dp"
+        android:layout_marginTop="6dp"
+        android:background="@drawable/bg_tab_switch"
+        android:orientation="horizontal"
+        android:padding="3dp">
+
+        <TextView
+            android:id="@+id/tv_tab_config"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="配置订阅"
+            android:textColor="@color/on_accent_text"
+            android:textSize="14sp"
+            android:background="@drawable/bg_tab_selected"
+            tools:ignore="NestedWeights" />
+
+        <TextView
+            android:id="@+id/tv_tab_live"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="直播订阅"
+            android:textColor="@color/text_foreground"
+            android:textSize="14sp" />
+    </LinearLayout>
+
+    <!-- 列表与空状态叠在一起，空状态才能落在列表区域正中，而不是被挤到屏幕底部 -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:layout_margin="10dp">
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:background="@drawable/bg_large_round_gray"
+            android:id="@+id/rv"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            tools:listitem="@layout/item_subscription"
+            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"/>
+
+        <TextView
+            android:id="@+id/tv_empty"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:text="暂无直播订阅，点右上角 + 添加"
+            android:textColor="@color/text_sub_foreground"
+            android:textSize="13sp"
+            android:visibility="gone"
+            tools:visibility="visible" />
+    </FrameLayout>
+
+</LinearLayout>

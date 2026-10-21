@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 夜间模式配色，取自 NewBox.apk 的 night/default 配置 -->
+    <color name="colorPrimary">#FFFFFFFF</color>
+    <color name="colorAccent">#FFFFFFFF</color>
+    <color name="windowBackground">#FF080808</color>
+    <color name="bg_gray">#FF141418</color>
+    <color name="gray_darker">#FF8E8E96</color>
+    <color name="gray_darker_press_alpha">#FF2A2A33</color>
+    <color name="text_foreground">#FFFFFFFF</color>
+    <color name="text_sub_foreground">#FFA0A0A8</color>
+    <color name="light_gray_color">#FFA0A0A8</color>
+    <color name="warn">#FFFFD54F</color>
+    <color name="red">#FFE85454</color>
+    <color name="disable_text">#FF606068</color>
+    <color name="bg_popup">#FF1C1C22</color>
+    <color name="bg_page">#FF080808</color>
+    <color name="disable_gray">#FF505058</color>
+    <color name="orange">#FFFF6D3B</color>
+    <color name="color_1890FF">#FFFFFFFF</color>
+    <color name="color_FFB800">#FFFF6D3B</color>
+    <color name="color_3D3D3D">#FF3D3D3D</color>
+    <color name="color_6632364E">#661A1A20</color>
+    <color name="color_6CFFFFFF">#6CFFFFFF</color>
+    <color name="color_353744">#FF1A1A20</color>
+    <color name="color_CC353744">#CC1A1A20</color>
+    <color name="color_FFFFFF">#FFFFFFFF</color>
+    <!-- 夜间表面：与 bg_gray 同色（夜间 #141418 与页面 #080808 本就有对比，
+         描边再给一道浅色使卡片边界更清楚） -->
+    <color name="bg_surface">#FF141418</color>
+    <color name="bg_field">#FF141418</color>
+    <color name="stroke_subtle">#24FFFFFF</color>
+</resources>

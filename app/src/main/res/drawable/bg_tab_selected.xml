@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 订阅管理顶部「配置订阅 / 直播订阅」分段选中态。
+     用固定强调实色 accent_solid，避免深色主题下 colorPrimary=白 造成白底白字。 -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="@color/accent_solid" />
+    <corners android:radius="8dp" />
+</shape>

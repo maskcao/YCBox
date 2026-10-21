@@ -1,0 +1,6 @@
+<resources>
+    <!-- 覆盖 ExpandableTextView 库 values-en 中的 app_name：
+         设备语言为英文时，(en) 配置比 values/ 默认配置优先级更高，
+         若不提供本文件，英文环境下应用名会显示为库默认的 ExpandableTextViewLibrary -->
+    <string name="app_name">YCBox</string>
+</resources>

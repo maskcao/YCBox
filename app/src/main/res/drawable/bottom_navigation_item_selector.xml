@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- 选中：主题强调色（日间深灰黑 / 夜间白） -->
+    <item android:color="@color/colorPrimary" android:state_checked="true" />
+    <!-- 未选中：次级文字色（日间 #5A5A60 / 夜间 #A0A0A8）。
+         原先用 disable_gray（日间 #C0C0C8），在白底上几乎看不清 -->
+    <item android:color="@color/text_sub_foreground" android:state_checked="false" />
+</selector>

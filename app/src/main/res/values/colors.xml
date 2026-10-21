@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+
+    <!--应用的主要色调,actionBar默认使用该颜色,Toolbar导航栏的底色-->
+    <color name="colorPrimary">#FF1A1A20</color>
+    <!--CheckBox,RadioButton,SwitchCompat等一般控件的选中效果默认采用该颜色-->
+    <color name="colorAccent">#FFC68500</color>
+    <!--    默认window窗口(activity)背景颜色-->
+    <color name="windowBackground">#FFFFFFFF</color>
+
+    <!--    浅色模式下不能与 windowBackground 同为纯白：所有以 bg_gray 为底的
+         卡片/列表容器（设置分组、订阅列表、直播分组、详情、搜索热词…）会直接"糊"在
+         白底上看不出边界。改成极浅灰，深色模式不变（夜间 bg_gray=#FF141418）。-->
+    <color name="bg_gray">#FFF6F6F8</color>
+    <color name="gray_darker">#FF5E5E66</color>
+    <!--    深灰点击透明度-->
+    <color name="gray_darker_press_alpha">#FFE5E5E8</color>
+
+    <!--    通用颜色-->
+    <color name="white">#FFFFFFFF</color>
+    <color name="black">#FF000000</color>
+    <color name="text_foreground">#FF000000</color>
+    <color name="text_sub_foreground">#FF5A5A60</color>
+    <color name="light_gray_color">#FF707078</color>
+    <!--    警示黄色-->
+    <color name="warn">#FFC97A00</color>
+    <color name="red">#FFC92020</color>
+
+    <color name="disable_text">#FF9A9AA0</color>
+
+    <!--    带点透明度(e6 90/100不透明)的pop-->
+    <color name="bg_popup">#FFFFFFFF</color>
+
+    <!--    制定颜色-->
+    <!--    页面背景色,activity.fragment等-->
+    <color name="bg_page">#FFFFFFFF</color>
+    <!--    不可用灰色颜色-->
+    <color name="disable_gray">#FFC0C0C8</color>
+
+    <color name="orange">#FFD45520</color>
+
+    <color name="color_6200EE">#6200EE</color>
+    <color name="color_3700B3">#3700B3</color>
+    <color name="color_03DAC5">#FF03DAC5</color>
+    <color name="title_fouse_n">#FFCE7900</color>
+    <color name="color_1890FF">#FF1A1A1F</color>
+    <color name="color_FFB800">#FFD45520</color>
+    <color name="color_00FF0A">#00FF0A</color>
+    <color name="color_CBF46A">#CBF46A</color>
+    <color name="color_FF90CA09">#FF90CA09</color>
+    <color name="color_BD0CADE2">#BD0CADE2</color>
+    <color name="color_FF0057">#FFFF0057</color>
+    <color name="color_FF5F00">#FFFF5F00</color>
+    <color name="color_FFB6C1">#FFFFB6C1</color>
+    <color name="color_3D3D3D">#FFE5E5E8</color>
+    <color name="color_32364E">#32364E</color>
+    <color name="color_6632364E">#66FFFFFF</color>
+    <color name="color_CCFFFFFF">#BBFFFFFF</color>
+    <color name="color_0CADE2">#0CADE2</color>
+    <color name="color_6CFFFFFF">#6C000000</color>
+    <color name="color_66000000">#66000000</color>
+    <color name="color_99000000">#99000000</color>
+    <color name="color_02F8E1">#FF02F8E1</color>
+    <color name="color_353744">#FFFFFFFF</color>
+    <color name="color_CC353744">#CCFFFFFF</color>
+    <color name="color_6C3D3D3D">#6C3D3D3D</color>
+    <color name="color_BBFFFFFF">#bbffffff</color>
+    <color name="color_FFFFFF">#FF000000</color>
+    <color name="color_33FFFFFF">#33ffffff</color>
+    <color name="color_99FFFFFF">#4D777373</color>
+    <color name="color_59353744">#59353744</color>
+    <color name="color_80FF0057">#66FF0057</color>
+
+    <!-- 「上次观看」提示的渐变底色：不随主题变为白色，
+         否则深色模式下会变成白底白字（原实现用 colorPrimary/colorAccent 渐变所致） -->
+    <color name="last_viewed_gradient_start">#1A1A20</color>
+    <color name="last_viewed_gradient_end">#C68500</color>
+    <!-- 强调实色（按钮等大面积填充）：两主题一致，避免深色下 colorPrimary=白 造成白块 -->
+    <color name="accent_solid">#C68500</color>
+    <!-- 琥珀金底上的文字色。白色在 #C68500 上对比度仅 3.1:1（贴无障碍下限），
+         改用深墨色后约 5.4:1。两主题通用，故只定义在 values/ 下。 -->
+    <color name="on_accent_text">#FF1A1A20</color>
+
+    <!-- 浅色模式的可辨识表面：bg_gray 与 windowBackground 同为 #FFFFFF，
+         搜索框、卡片直接用它会"糊"在白底上看不出边界，这里给出略微可辨的底色+描边 -->
+    <color name="bg_surface">#FFF7F7F9</color>
+    <color name="bg_field">#FFF1F1F4</color>
+    <color name="stroke_subtle">#1F000000</color>
+
+</resources>

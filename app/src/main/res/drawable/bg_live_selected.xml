@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 直播频道/分组的选中态背景：琥珀金实心圆角。
+     不能复用 bg_r_common_solid_primary（那是列表项默认背景，日间为白），
+     否则浅色模式下会与选中态的白色文字撞成"白底白字"。 -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="@color/accent_solid" />
+    <corners android:radius="@dimen/common_corners" />
+</shape>
