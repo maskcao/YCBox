@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 订阅圆形单选-未选中态：空心圆环（带固有尺寸， ImageView fitCenter 才能正确缩放） -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="oval">
+    <size
+        android:width="26dp"
+        android:height="26dp"/>
+    <stroke android:width="2dp" android:color="@color/radio_ring"/>
+</shape>

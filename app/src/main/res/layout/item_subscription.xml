@@ -10,71 +10,76 @@
     android:background="@drawable/bg_card_rounded"
     android:padding="12dp">
 
-    <CheckBox
+    <!-- 圆形单选：用 ImageView + 显式两张图（radio_on/radio_off），避免 CheckBox 被主题 tint 染色；
+         相对名称行+地址行整体垂直居中 -->
+    <ImageView
         android:id="@+id/cb"
         android:layout_width="26dp"
         android:layout_height="26dp"
-        android:button="@drawable/button_radio_dock"
         android:clickable="false"
-        android:checked="false"
         android:focusable="false"
+        android:src="@drawable/radio_off"
+        app:layout_constraintBottom_toBottomOf="@id/tv_url"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="@id/ll_name_row" />
 
-    <!-- 名称行：cb 右侧 → 来自标签左侧 -->
-    <!-- 名称：终点锚在内置标签左侧（内置标签固定在行右侧，不再随名字长度变动） -->
-    <TextView
-        android:id="@+id/tv_name"
+    <!-- 名称行：cb 右侧 → 删除/图钉左侧；名称 weight=1 填满，「内置」「来自」固定右对齐 -->
+    <LinearLayout
+        android:id="@+id/ll_name_row"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="12dp"
-        android:ellipsize="end"
-        android:marqueeRepeatLimit="marquee_forever"
-        android:singleLine="true"
-        android:textColor="@color/text_foreground"
-        android:textSize="15sp"
-        android:textStyle="bold"
-        app:layout_constraintBottom_toBottomOf="@id/cb"
-        app:layout_constraintEnd_toStartOf="@id/tv_builtin"
-        app:layout_constraintStart_toEndOf="@id/cb"
-        app:layout_constraintTop_toTopOf="@id/cb"
-        tools:text="小账订阅小账订阅小账订阅" />
-
-    <TextView
-        android:id="@+id/tv_builtin"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:background="@drawable/bg_tag_builtin"
-        android:text="内置"
-        android:textColor="@color/accent_solid"
-        android:textSize="11dp"
-        android:visibility="gone"
-        app:layout_constraintBottom_toBottomOf="@id/tv_name"
-        app:layout_constraintEnd_toStartOf="@id/tv_from"
-        app:layout_constraintTop_toTopOf="@id/tv_name"
-        tools:visibility="visible" />
-
-    <!-- 「来自：xxx」小标签（仅直播订阅显示）：半透明蓝圆角，名称行右侧 -->
-    <TextView
-        android:id="@+id/tv_from"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginEnd="6dp"
-        android:background="@drawable/bg_tag_from"
-        android:ellipsize="end"
-        android:paddingHorizontal="8dp"
-        android:paddingVertical="2dp"
-        android:singleLine="true"
-        android:textColor="@color/chip_blue_fg"
-        android:textSize="11sp"
-        android:visibility="gone"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
         app:layout_constraintBottom_toBottomOf="@id/cb"
         app:layout_constraintEnd_toStartOf="@id/iv_pushpin"
-        app:layout_constraintTop_toTopOf="@id/cb"
-        tools:text="来自：订阅 6"
-        tools:visibility="visible" />
+        app:layout_constraintStart_toEndOf="@id/cb"
+        app:layout_constraintTop_toTopOf="@id/cb">
 
-    <!-- 地址：名称正下方，与名称左对齐 -->
+        <TextView
+            android:id="@+id/tv_name"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:ellipsize="end"
+            android:marqueeRepeatLimit="marquee_forever"
+            android:singleLine="true"
+            android:textColor="@color/text_foreground"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            tools:text="小账订阅小账订阅小账订阅" />
+
+        <TextView
+            android:id="@+id/tv_builtin"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="6dp"
+            android:background="@drawable/bg_tag_builtin"
+            android:text="内置"
+            android:textColor="@color/accent_solid"
+            android:textSize="11dp"
+            android:visibility="gone"
+            tools:visibility="visible" />
+
+        <!-- 「来自：xxx」小标签（仅直播订阅显示）：半透明蓝圆角，固定在名称行右侧 -->
+        <TextView
+            android:id="@+id/tv_from"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="6dp"
+            android:background="@drawable/bg_tag_from"
+            android:ellipsize="end"
+            android:paddingHorizontal="8dp"
+            android:paddingVertical="2dp"
+            android:singleLine="true"
+            android:textColor="@color/chip_blue_fg"
+            android:textSize="11sp"
+            android:visibility="gone"
+            tools:text="来自：订阅 6"
+            tools:visibility="visible" />
+    </LinearLayout>
+
+    <!-- 地址：名称正下方，与名称左对齐（锚在名称行底部，避免与 cb 循环约束） -->
     <TextView
         android:id="@+id/tv_url"
         android:layout_width="0dp"
@@ -87,7 +92,7 @@
         android:textSize="12sp"
         app:layout_constraintEnd_toStartOf="@id/iv_pushpin"
         app:layout_constraintStart_toEndOf="@id/cb"
-        app:layout_constraintTop_toBottomOf="@id/cb"
+        app:layout_constraintTop_toBottomOf="@id/ll_name_row"
         tools:text="https://" />
 
     <ImageView

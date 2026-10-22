@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 订阅圆形单选-选中态：dock_accent 实心圆 + 白勾 -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:width="26dp"
+        android:height="26dp">
+        <shape android:shape="oval">
+            <solid android:color="@color/dock_accent"/>
+        </shape>
+    </item>
+    <item
+        android:width="14dp"
+        android:height="14dp"
+        android:gravity="center"
+        android:drawable="@drawable/ic_check_white"/>
+</layer-list>

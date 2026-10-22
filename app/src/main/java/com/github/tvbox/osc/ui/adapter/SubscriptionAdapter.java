@@ -42,9 +42,13 @@ public class SubscriptionAdapter extends BaseQuickAdapter<Subscription, BaseView
 
         helper.setText(R.id.tv_name,item.getName())
         .setText(R.id.tv_url,item.getUrl())
-        .setChecked(R.id.cb,checked)
         .setVisible(R.id.iv_pushpin,item.isTop())
         .setVisible(R.id.tv_builtin,isBuiltin);
+
+        // 圆形单选用 ImageView + 显式两张图（radio_on/radio_off），
+        // CheckBox 的 button drawable 会被主题 tint 染色（选中圆变白色）
+        ((android.widget.ImageView) helper.getView(R.id.cb))
+                .setImageResource(checked ? R.drawable.radio_on : R.drawable.radio_off);
 
         String from = item.getFrom();
         boolean hasFrom = showFrom && from != null && !from.trim().isEmpty();
