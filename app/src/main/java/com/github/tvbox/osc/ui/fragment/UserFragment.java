@@ -299,8 +299,8 @@ public class UserFragment extends BaseLazyFragment {
             }
             RowVH vh = new RowVH(LayoutInflater.from(parent.getContext())
                     .inflate(R.layout.item_home_section_row, parent, false));
-            // 两行横滑网格
-            V7GridLayoutManager lm = new V7GridLayoutManager(parent.getContext(), 2,
+            // 每个分类一行横滑海报
+            V7GridLayoutManager lm = new V7GridLayoutManager(parent.getContext(), 1,
                     GridLayoutManager.HORIZONTAL, false);
             vh.rv.setLayoutManager(lm);
             return vh;
