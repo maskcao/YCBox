@@ -5,17 +5,15 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:orientation="vertical">
 
+    <!-- 主页分区列表：站点推荐 / 热门电视剧 / 豆瓣热门 / 高分电影 / 综艺热播，
+         每个分区 = 标题 + 两行横滑海报；底部 padding 给悬浮 dock 让位 -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/tvHotList1"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        tools:listitem="@layout/item_grid"
-        tools:layoutManager="androidx.recyclerview.widget.GridLayoutManager"
-        tools:spanCount="3"
+        android:clipToPadding="false"
         android:paddingHorizontal="10dp"
+        android:paddingBottom="96dp"
         />
-
-    <!-- 直播入口已移至底部 dock 导航栏（见 main_bottom_navigation.xml 的 navigation_live），
-         此处不再保留悬浮按钮，避免出现两个入口 -->
 
 </RelativeLayout>
