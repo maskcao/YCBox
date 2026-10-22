@@ -2,4 +2,4 @@
 <!-- 首页分区横滑行：两行海报、横向滚动 -->
 <com.owen.tvrecyclerview.widget.TvRecyclerView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="296dp" />
+    android:layout_height="336dp" />

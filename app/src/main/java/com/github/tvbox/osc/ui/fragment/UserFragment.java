@@ -212,8 +212,8 @@ public class UserFragment extends BaseLazyFragment {
                 JsonObject obj = (JsonObject) ele;
                 Movie.Video vod = new Movie.Video();
                 vod.name = obj.get("title").getAsString();
+                // 评分徽章只放数字（如 9.3），与参考样式一致
                 vod.note = obj.get("rate").getAsString();
-                if (!vod.note.isEmpty()) vod.note += " 分";
                 vod.pic = obj.get("cover").getAsString() + "@Referer=https://movie.douban.com/@User-Agent=" + UA.random();
                 result.add(vod);
             }
