@@ -23,7 +23,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="@id/ll_name_row" />
 
-    <!-- 名称行：cb 右侧 → 删除/图钉左侧；名称 weight=1 填满，「内置」「来自」固定右对齐 -->
+    <!-- 名称行：顶部直接锚在卡片顶部（单向），不再与 cb 互锚 -->
     <LinearLayout
         android:id="@+id/ll_name_row"
         android:layout_width="0dp"
@@ -31,10 +31,9 @@
         android:layout_marginStart="12dp"
         android:gravity="center_vertical"
         android:orientation="horizontal"
-        app:layout_constraintBottom_toBottomOf="@id/cb"
         app:layout_constraintEnd_toStartOf="@id/iv_pushpin"
         app:layout_constraintStart_toEndOf="@id/cb"
-        app:layout_constraintTop_toTopOf="@id/cb">
+        app:layout_constraintTop_toTopOf="parent">
 
         <TextView
             android:id="@+id/tv_name"
