@@ -51,6 +51,12 @@ class MainActivity : BaseVbActivity<ActivityMainBinding>() {
             }
         }
 
+        // 保留全部页面不销毁：ViewPager 默认 offscreenPageLimit=1，
+        // 而首页(0)与「我的」(n-1)相距 2 页时会触发 FragmentPagerAdapter 的 detach，
+        // 导致首页 onDestroyView → 切回时重建视图并重新 initData()，海报全部重新加载。
+        // 页位最多 3 个（首页/历史收藏/我的），全部常驻的内存代价可接受。
+        mBinding.vp.offscreenPageLimit = (fragments.size - 1).coerceAtLeast(1)
+
         buildDock()
 
         // 主题切换会重启应用，这里恢复到「我的」页，便于用户确认结果
@@ -78,27 +84,37 @@ class MainActivity : BaseVbActivity<ActivityMainBinding>() {
 
     private val dockViews = mutableMapOf<Int, View>()
 
+    /** 上次构建 dock 时的显隐配置签名；配置未变就不重建 */
+    private var dockConfigSig: String? = null
+
     /** 依据设置里的显隐开关构建自绘 dock（首页/我的固定显示） */
     private fun buildDock() {
+        val showLive = Hawk.get(HawkConfig.DOCK_SHOW_LIVE, true)
+        val showHistory = Hawk.get(HawkConfig.DOCK_SHOW_HISTORY, true)
+        val sig = "$showLive/$showHistory"
+        // 显隐配置没变时只同步选中态。
+        // 旧实现每次 onResume 都 removeAllViews + 重新 inflate，而 onResume 时窗口已经可见，
+        // 这个"先清空再填满"的空档会被看到一帧，表现就是底部导航栏闪一下。
+        if (sig == dockConfigSig && dockViews.isNotEmpty()) {
+            selectDock(currentDockId())
+            return
+        }
+        dockConfigSig = sig
+
         val bar = mBinding.dockBar
         bar.removeAllViews()
         dockViews.clear()
         val entries = listOf(
             DockEntry(R.id.navigation_home, R.drawable.nav_ic_home, "首页", true),
             DockEntry(R.id.navigation_live, R.drawable.ic_live_nav, "直播", false),
-            DockEntry(
-                R.id.navigation_history_collect,
-                R.drawable.nav_ic_history,
-                "历史/收藏",
-                Hawk.get(HawkConfig.DOCK_SHOW_HISTORY, true)
-            ),
+            DockEntry(R.id.navigation_history_collect, R.drawable.nav_ic_history, "历史/收藏", showHistory),
             DockEntry(R.id.navigation_dashboard, R.drawable.nav_ic_my, "我的", true)
         )
         val inflater = android.view.LayoutInflater.from(this)
         for (e in entries) {
             val visible = when (e.id) {
-                R.id.navigation_live -> Hawk.get(HawkConfig.DOCK_SHOW_LIVE, true)
-                R.id.navigation_history_collect -> Hawk.get(HawkConfig.DOCK_SHOW_HISTORY, true)
+                R.id.navigation_live -> showLive
+                R.id.navigation_history_collect -> showHistory
                 else -> true
             }
             if (!visible) continue
@@ -127,25 +143,20 @@ class MainActivity : BaseVbActivity<ActivityMainBinding>() {
         }
     }
 
-    /** 选中指定 dock 条目：橙色圆角方块 + 白色图标 + 橙色标签，其余为正文色 */
+    /**
+     * 选中指定 dock 条目：橙色圆角方块 + 白色图标 + 橙色标签，其余为正文色。
+     *
+     * <p>只改 selected 状态，具体配色交给资源里的 selector：
+     * 图标 tint = res/color/dock_icon_tint，图标底 = res/drawable/bg_dock_tile_selector，
+     * 标签色 = res/color/dock_label_color，三者都按 state_selected 解析。
+     *
+     * <p>这样 inflate 出来的第一帧就是最终配色。旧实现是"XML 不写颜色 + 代码逐个
+     * setColorFilter/setTextColor"，首帧会露出矢量的原始白色（叠在 #E3E3E3 药丸上几乎看不见），
+     * 下一帧才被染成正文色，表现为刚进软件 / 切主题时导航栏闪一下。
+     */
     private fun selectDock(id: Int) {
         for ((entryId, view) in dockViews) {
-            val checked = entryId == id
-            val icon = view.findViewById<ImageView>(R.id.dock_icon)
-            val label = view.findViewById<TextView>(R.id.dock_label)
-            icon.setBackgroundResource(if (checked) R.drawable.bg_dock_tile else 0)
-            // 图标矢量是白色填充，未选中时染成正文色保证浅色药丸上的对比度
-            icon.setColorFilter(
-                androidx.core.content.ContextCompat.getColor(
-                    this,
-                    if (checked) android.R.color.white else R.color.text_foreground
-                )
-            )
-            label.setTextColor(
-                androidx.core.content.ContextCompat.getColor(
-                    this, if (checked) R.color.dock_accent else R.color.text_foreground
-                )
-            )
+            view.isSelected = entryId == id
         }
     }
 

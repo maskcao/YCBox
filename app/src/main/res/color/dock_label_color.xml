@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- dock 标签文字色：选中 accent，未选中正文色（浅/夜各自解析） -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:color="@color/dock_accent" android:state_selected="true" />
+    <item android:color="@color/text_foreground" />
+</selector>

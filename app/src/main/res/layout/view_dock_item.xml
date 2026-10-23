@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 自绘 dock 的单个条目：图标（选中时挂橙色圆角方块底）+ 小号标签，整体居中 -->
+<!-- 自绘 dock 的单个条目：图标（选中时挂橙色圆角方块底）+ 小号标签，整体居中。
+     配色全部由 selected 状态 + res/color 里的 selector 决定，
+     保证 inflate 出来的第一帧就是最终配色（不再依赖代码后置染色）。 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="0dp"
     android:layout_height="match_parent"
     android:layout_weight="1"
@@ -13,12 +16,15 @@
         android:id="@+id/dock_icon"
         android:layout_width="26dp"
         android:layout_height="26dp"
-        android:scaleType="fitCenter"/>
+        android:background="@drawable/bg_dock_tile_selector"
+        android:scaleType="fitCenter"
+        app:tint="@color/dock_icon_tint" />
 
     <TextView
         android:id="@+id/dock_label"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="1dp"
+        android:textColor="@color/dock_label_color"
         android:textSize="12sp"/>
 </LinearLayout>

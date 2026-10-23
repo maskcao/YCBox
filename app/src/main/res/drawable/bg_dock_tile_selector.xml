@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- dock 选中项图标底：selected 时显示橙色圆角方块，未选中透明。
+     用 selector 而非代码 setBackgroundResource，避免"先透明后上色"的中间帧。 -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_selected="true">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/dock_accent" />
+            <corners android:radius="9dp" />
+        </shape>
+    </item>
+    <item android:drawable="@android:color/transparent" />
+</selector>

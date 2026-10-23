@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- dock 图标染色：由条目的 selected 状态直接决定，不靠代码后置 setColorFilter。
+     矢量图标本体都是白色填充，若不染色，浅色模式下会变成"白图标挂在浅灰药丸上"。 -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:color="@android:color/white" android:state_selected="true" />
+    <item android:color="@color/text_foreground" />
+</selector>
