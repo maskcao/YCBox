@@ -2,6 +2,7 @@ package com.github.tvbox.osc.ui.fragment;
 
 import android.content.Intent;
 import android.net.Uri;
+import android.util.Log;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
@@ -15,6 +16,7 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.blankj.utilcode.util.ConvertUtils;
 import com.blankj.utilcode.util.ToastUtils;
 import com.chad.library.adapter.base.BaseQuickAdapter;
 import com.github.tvbox.osc.R;
@@ -26,6 +28,7 @@ import com.github.tvbox.osc.ui.activity.FastSearchActivity;
 import com.github.tvbox.osc.ui.adapter.SectionVodAdapter;
 import com.github.tvbox.osc.util.FastClickCheckUtil;
 import com.github.tvbox.osc.util.HawkConfig;
+import com.github.tvbox.osc.util.ThumbLoader;
 import com.github.tvbox.osc.util.UA;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
@@ -45,10 +48,10 @@ import java.util.List;
 /**
  * 首页「主页」tab：多分区结构（参考样式）。
  *
- * <p>每个分区 = 标题 + 两行横滑海报：
+ * <p>布局自上而下：
  * <ul>
- *   <li>站点推荐 —— 来自订阅配置的推荐视频（HOME_REC=1 且有数据时显示）</li>
- *   <li>热门电视剧 / 豆瓣热门 / 高分电影 / 综艺热播 —— 豆瓣接口按 tags 异步加载，结果按天缓存</li>
+ *   <li>站点推荐 —— 来自订阅配置的推荐视频（源有推荐数据时常驻显示）</li>
+ *   <li>热门电视剧 / 豆瓣热门 / 高分电影 / 综艺热播 / 动漫精选 —— 豆瓣接口按 tags 异步加载，结果按天缓存</li>
  * </ul>
  */
 public class UserFragment extends BaseLazyFragment {
@@ -108,14 +111,15 @@ public class UserFragment extends BaseLazyFragment {
         tvHotList1.setAdapter(mOuterAdapter);
         setLoadSir2(tvHotList1);
 
-        // 站点推荐在 setArguments 里已就位（HOME_REC=1 且有数据）
+        // 站点推荐在 setArguments 里已就位（源有推荐数据时常驻）
 
         // 豆瓣分区：按 tags 异步加载
-        doubanPending = 4;
+        doubanPending = 5;
         fetchDouban(newSection("热门电视剧"), "U", "电视剧");
         fetchDouban(newSection("豆瓣热门"), "U", "");
         fetchDouban(newSection("高分电影"), "R", "电影");
         fetchDouban(newSection("综艺热播"), "U", "综艺");
+        fetchDouban(newSection("动漫精选"), "U", "动漫");
     }
 
     // ---------------- 分区数据加载 ----------------
@@ -181,15 +185,11 @@ public class UserFragment extends BaseLazyFragment {
 
     private void fillSection(Section section, ArrayList<Movie.Video> videos) {
         int n = videos == null ? 0 : videos.size();
-        if (n > 0) {
-            section.adapter.setNewData(videos);
-            if (!section.visible) {
-                section.visible = true;
-                mOuterAdapter.notifyDataSetChanged();
-            } else {
-                section.adapter.notifyDataSetChanged();
-            }
-        }
+        if (n <= 0) return;
+        section.adapter.setNewData(videos);
+        section.visible = true;
+        // 分区增删会改变 getItemCount，整体刷新最稳妥
+        mOuterAdapter.notifyDataSetChanged();
     }
 
     private synchronized void onDoubanDone() {
@@ -224,18 +224,26 @@ public class UserFragment extends BaseLazyFragment {
 
     // ---------------- 点击行为（与旧版一致：详情 / 搜索） ----------------
 
+    /**
+     * 豆瓣数据（站点推荐/豆瓣热门/动漫精选等）的 id 形如 "msearch:片名"，
+     * 它只是一个"多源搜索"占位标记，详情页拿它去拉详情必然返回空（暂无数据）。
+     * 与分类页 GridFragment 保持一致：这类 id 一律走搜索页，用片名在全站可搜索源里搜，
+     * 结果按站点分 tab，用户可以自行换源。
+     */
+    private static final String MSE_PREFIX = "msearch:";
+
     private static void onVodClickStatic(Movie.Video vod) {
         if (ApiConfig.get().getSourceBeanList().isEmpty()) {
             ToastUtils.showShort("暂无订阅");
             return;
         }
         Bundle bundle = new Bundle();
-        if (!TextUtils.isEmpty(vod.id)) {
+        if (!TextUtils.isEmpty(vod.id) && !vod.id.startsWith(MSE_PREFIX)) {
             bundle.putString("id", vod.id);
             bundle.putString("sourceKey", vod.sourceKey);
             AppStarter.startDetail(bundle);
         } else {
-            bundle.putString("title", vod.name);
+            bundle.putString("title", searchKeywordOf(vod));
             AppStarter.startSearch(bundle);
         }
     }
@@ -243,8 +251,22 @@ public class UserFragment extends BaseLazyFragment {
     private static void onVodLongClickStatic(Movie.Video vod) {
         if (ApiConfig.get().getSourceBeanList().isEmpty()) return;
         Bundle bundle = new Bundle();
-        bundle.putString("title", vod.name);
+        bundle.putString("title", searchKeywordOf(vod));
         AppStarter.startSearch(bundle);
+    }
+
+    /**
+     * 搜索关键词：优先用片名。
+     * 注意 msearch: 后面跟的是豆瓣条目号（如 msearch:36675942），不是片名，
+     * 拿它当关键词必然搜不到东西，所以只在片名为空时才退到 id 后缀。
+     */
+    private static String searchKeywordOf(Movie.Video vod) {
+        String name = vod.name == null ? "" : vod.name.trim();
+        if (!TextUtils.isEmpty(name)) return name;
+        if (!TextUtils.isEmpty(vod.id) && vod.id.startsWith(MSE_PREFIX)) {
+            return vod.id.substring(MSE_PREFIX.length()).trim();
+        }
+        return vod.id == null ? "" : vod.id.trim();
     }
 
     /** 静态回调里跳页用的中转（Fragment 实例通过 WeakReference 注册） */
@@ -260,7 +282,7 @@ public class UserFragment extends BaseLazyFragment {
         }
     }
 
-    // ---------------- 外层分区列表适配器 ----------------
+    // ---------------- 外层列表适配器（分区标题 + 横滑行） ----------------
 
     private class SectionOuterAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
@@ -303,6 +325,11 @@ public class UserFragment extends BaseLazyFragment {
             V7GridLayoutManager lm = new V7GridLayoutManager(parent.getContext(), 1,
                     GridLayoutManager.HORIZONTAL, false);
             vh.rv.setLayoutManager(lm);
+            // 注意：owen 的 TvRecyclerView 会用它自己的 spacing 覆盖 item 的 margin
+            // （见 TvRecyclerView.checkLayoutParams，默认 spacing=0 会把海报贴死、margin 失效）。
+            // 这里补上与分类网格页一致的 10dp 间距（每边 5dp），让首页横滑与分类页观感统一。
+            int gap = ConvertUtils.dp2px(10f);
+            vh.rv.setSpacingWithMargins(gap, gap);
             return vh;
         }
 
