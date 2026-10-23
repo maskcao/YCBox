@@ -43,6 +43,7 @@ import com.github.tvbox.osc.ui.activity.FastSearchActivity
 import com.github.tvbox.osc.ui.activity.HistoryActivity
 import com.github.tvbox.osc.ui.activity.MainActivity
 import com.github.tvbox.osc.ui.activity.SubscriptionActivity
+import com.github.tvbox.osc.util.StringUtils
 import com.github.tvbox.osc.ui.adapter.SelectDialogAdapter.SelectDialogInterface
 import com.github.tvbox.osc.ui.dialog.LastViewedDialog
 import com.github.tvbox.osc.ui.dialog.SelectDialog
@@ -167,7 +168,9 @@ class HomeFragment : BaseVbFragment<FragmentHomeBinding>() {
 
         val home = ApiConfig.get().homeSourceBean
         if (home != null && !home.name.isNullOrEmpty()) {
-            mBinding.tvName.text = home.name
+            // 源配置的 name 常带 emoji 装饰（如 "🐮【免费分享】🐮"）。彩色 emoji 是位图字体，
+            // 16sp 下渲染发虚；卡通风格也与扁平化顶栏冲突。展示层统一剥离，配置本身不动。
+            mBinding.tvName.text = StringUtils.stripEmoji(home.name)
             mBinding.tvName.postDelayed({ mBinding.tvName.isSelected = true }, 2000)
         }
         loadSourceLogo()
@@ -369,14 +372,10 @@ class HomeFragment : BaseVbFragment<FragmentHomeBinding>() {
             fragments.clear()
             for (data in mSortDataList) {
                 mBinding.tabLayout.addView(getTabTextView(data.name))
-                if (data.id == "my0") { //tab是主页,添加主页fragment 根据设置项显示豆瓣热门/站点推荐(每个源不一样)/历史记录
-                    if (Hawk.get(
-                            HawkConfig.HOME_REC,
-                            0
-                        ) == 1 && absXml != null && absXml.videoList != null && absXml.videoList.size > 0
-                    ) { //站点推荐
+                if (data.id == "my0") { //tab是主页：站点推荐(源有推荐数据时常驻) + 豆瓣分区
+                    if (absXml != null && absXml.videoList != null && absXml.videoList.size > 0) { //站点推荐
                         fragments.add(UserFragment.newInstance(absXml.videoList))
-                    } else { //豆瓣热门/历史记录
+                    } else { //无推荐数据：仅豆瓣分区
                         fragments.add(UserFragment.newInstance(null))
                     }
                 } else { //来自源的分类

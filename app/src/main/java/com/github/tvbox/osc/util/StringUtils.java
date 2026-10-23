@@ -148,6 +148,66 @@ public class StringUtils {
         return listToString(list, "&&");
     }
 
+    /**
+     * 去掉字符串里的 emoji / 装饰性图案符号（含 ZWJ 组合与变体选择符）。
+     *
+     * <p>背景：订阅源配置里的 name 常带 emoji 装饰，例如 "🐮【免费分享】🐮"。
+     * 这类符号在本项目 UI 上有两个硬伤：
+     * <ol>
+     *   <li><b>模糊</b>：Android 的彩色 emoji 是位图字体（NotoColorEmoji），
+     *       在 16sp 的小字号下渲染发虚，高 DPI 屏幕上尤其明显；</li>
+     *   <li><b>突兀</b>：彩色卡通 emoji 与本项目扁平化的顶栏完全不搭。</li>
+     * </ol>
+     *
+     * <p>这里只做**展示层**清洗，不修改配置本身；整串都是 emoji 时回退原文，
+     * 避免顶栏被清成空白。
+     */
+    public static String stripEmoji(String str) {
+        if (str == null || str.isEmpty()) {
+            return str;
+        }
+        StringBuilder sb = new StringBuilder(str.length());
+        int i = 0;
+        while (i < str.length()) {
+            int cp = str.codePointAt(i);
+            if (!isEmojiCodePoint(cp)) {
+                sb.appendCodePoint(cp);
+            }
+            i += Character.charCount(cp);
+        }
+        String out = sb.toString().trim();
+        return out.isEmpty() ? str.trim() : out;
+    }
+
+    private static boolean isEmojiCodePoint(int cp) {
+        // 变体选择符 FE0E/FE0F、零宽连接符 ZWJ、键帽组合符
+        if (cp == 0xFE0E || cp == 0xFE0F || cp == 0x200D || cp == 0x20E3) {
+            return true;
+        }
+        // 区域旗帜（🇨🇳 等，由两个区域指示符组成）
+        if (cp >= 0x1F1E6 && cp <= 0x1F1FF) {
+            return true;
+        }
+        // emoji 主体区（含肤色修饰符 1F3FB-1F3FF）
+        if (cp >= 0x1F000 && cp <= 0x1FAFF) {
+            return true;
+        }
+        // 杂项符号与 Dingbats：☀ ✅ ❌ ✨ ⭐ 等
+        if (cp >= 0x2600 && cp <= 0x27BF) {
+            return true;
+        }
+        // 杂项符号与箭头：⬆ ⬇ 等源名常见装饰
+        if (cp >= 0x2B00 && cp <= 0x2BFF) {
+            return true;
+        }
+        // 私用区（部分源用自定义图标字体）
+        if (cp >= 0xE000 && cp <= 0xF8FF) {
+            return true;
+        }
+        // 兜底：Unicode 类别为 So（Other Symbol）的图案符号
+        return Character.getType(cp) == Character.OTHER_SYMBOL;
+    }
+
     public static String trimBlanks(String str) {
         if (str == null || str.length() == 0) {
             return str;

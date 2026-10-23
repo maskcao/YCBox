@@ -35,11 +35,13 @@
                 android:scaleType="centerCrop"
                 android:visibility="gone" />
 
+            <!-- maxWidth 132dp：容得下「【免费分享】」这类 6 字源名 + 下拉箭头（实测约 118dp），
+                 短名字就不会触发 marquee 跑马灯（滚动重影看着发糊），超长源名才滚 -->
             <TextView
                 android:id="@+id/tvName"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:maxWidth="110dp"
+                android:maxWidth="132dp"
                 android:text="@string/app_name"
                 android:textAlignment="gravity"
                 android:textColor="@color/text_foreground"
