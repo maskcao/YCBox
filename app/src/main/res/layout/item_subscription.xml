@@ -23,60 +23,93 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="@id/ll_name_row" />
 
-    <!-- 名称行：顶部直接锚在卡片顶部（单向），不再与 cb 互锚 -->
-    <LinearLayout
+    <!-- 名称行：名称占满剩余宽度，右侧标签整体右对齐。
+         注意这里不能用 LinearLayout + weight：0dp+weight 在 0dp 宽的父容器里不生效，
+         名称会被钉死在 142dp，直播订阅名（重命名允许 12 字 ≈ 180dp）必然被截断。
+         也不要用 ConstraintLayout 链：标签 GONE 时链上的位置解析会退化，宽度同样不可控。
+         现在的结构是单向依赖——名称只依赖标签容器，标签不依赖名称，没有环。 -->
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/ll_name_row"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="12dp"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
         app:layout_constraintEnd_toStartOf="@id/iv_pushpin"
         app:layout_constraintStart_toEndOf="@id/cb"
         app:layout_constraintTop_toTopOf="parent">
 
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/gl_tags"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            app:layout_constraintGuide_percent="0.70" />
+
         <TextView
             android:id="@+id/tv_name"
-            android:layout_width="0dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
             android:ellipsize="end"
-            android:marqueeRepeatLimit="marquee_forever"
-            android:singleLine="true"
+            android:lineSpacingExtra="1dp"
+            android:maxLines="2"
             android:textColor="@color/text_foreground"
-            android:textSize="15sp"
+            android:textSize="14sp"
             android:textStyle="bold"
+            app:layout_constrainedWidth="true"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/gl_tags"
+            app:layout_constraintHorizontal_bias="0"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
             tools:text="小账订阅小账订阅小账订阅" />
 
+        <!-- 「内置」标签：必须放在 ConstraintLayout 里而不是 ll_tags 里。
+             LinearLayout 里 GONE 的子 view 仍会占掉它自己的测量宽度（约 78px），
+             名称会被白白挤窄 30dp，长中文名就会多折一行 -->
         <TextView
             android:id="@+id/tv_builtin"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="6dp"
+            android:layout_marginEnd="6dp"
             android:background="@drawable/bg_tag_builtin"
             android:text="内置"
             android:textColor="@color/accent_solid"
             android:textSize="11dp"
             android:visibility="gone"
+            app:layout_constraintBottom_toBottomOf="@id/tv_name"
+            app:layout_constraintEnd_toStartOf="@id/ll_tags"
+            app:layout_constraintTop_toTopOf="@id/tv_name"
             tools:visibility="visible" />
 
-        <!-- 「来自：xxx」小标签（仅直播订阅显示）：半透明蓝圆角，固定在名称行右侧 -->
-        <TextView
-            android:id="@+id/tv_from"
+        <!-- 标签容器：固定贴右，宽度随内容；标签 GONE 时整体宽度为 0，
+             名称就自动铺满整行 -->
+        <LinearLayout
+            android:id="@+id/ll_tags"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="6dp"
-            android:background="@drawable/bg_tag_from"
-            android:ellipsize="end"
-            android:paddingHorizontal="8dp"
-            android:paddingVertical="2dp"
-            android:singleLine="true"
-            android:textColor="@color/chip_blue_fg"
-            android:textSize="11sp"
-            android:visibility="gone"
-            tools:text="来自：订阅 6"
-            tools:visibility="visible" />
-    </LinearLayout>
+            android:orientation="horizontal"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="@id/tv_name">
+
+            <!-- 「来自：xxx」小标签（仅直播订阅显示）：半透明蓝圆角。
+                 限宽 88dp —— 长来源名省略即可，绝不能把名称挤没了 -->
+            <TextView
+                android:id="@+id/tv_from"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_tag_from"
+                android:ellipsize="end"
+                android:maxWidth="72dp"
+                android:paddingHorizontal="6dp"
+                android:paddingVertical="2dp"
+                android:singleLine="true"
+                android:textColor="@color/chip_blue_fg"
+                android:textSize="10sp"
+                android:visibility="gone"
+                tools:text="来自：订阅 6"
+                tools:visibility="visible" />
+        </LinearLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
     <!-- 地址：名称正下方，与名称左对齐（锚在名称行底部，避免与 cb 循环约束） -->
     <TextView
