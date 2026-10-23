@@ -52,5 +52,14 @@ public class GridAdapter extends BaseQuickAdapter<Movie.Video, BaseViewHolder> {
         ImageView ivThumb = helper.getView(R.id.ivThumb);
         //统一走 ThumbLoader：jar 爬虫给的封面可能是 data: base64，Picasso 不认
         ThumbLoader.load(ivThumb, item.pic);
+
+        // ShadowLayout 会消费封面区的触摸（自身 clickable=true），事件不再冒泡到 itemView，
+        // 导致挂在 itemView 上的 setOnItemClickListener 收不到点击（只有底部标题能点）。
+        // 对策：让封面区的点击转发给 itemView。
+        // 注意顺序：ShadowLayout 重写了 setOnClickListener——只有 isClickable=true 时
+        // 才会把 listener 透传给父类，否则只存在自己字段里（永远不回调），故显式 setClickable(true)。
+        View poster = helper.getView(R.id.shadowPoster);
+        poster.setOnClickListener(v -> helper.itemView.performClick());
+        poster.setClickable(true);
     }
 }

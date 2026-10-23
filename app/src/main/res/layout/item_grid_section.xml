@@ -8,7 +8,12 @@
     android:layout_margin="5dp"
     android:orientation="vertical">
 
+    <!-- ShadowLayout 构造里会 setClickable(true)（XML 覆盖无效，实测仍为 true），
+         会吃掉整块封面区域的触摸，导致 adapter 挂在根布局上的点击收不到，
+         表现为「点海报图片没反应、只有底部标题能点」。
+         对策：给它设 id，由 adapter 把点击转发给根布局（见 SectionVodAdapter）。 -->
     <com.lihang.ShadowLayout
+        android:id="@+id/shadowPoster"
         android:layout_width="match_parent"
         android:layout_height="140dp"
         app:hl_cornerRadius="14dp">
