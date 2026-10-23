@@ -76,7 +76,15 @@ public class App extends MultiDexApplication {
         initCrashConfig();
         Utils.initTheme();
         // 预热壁纸到 Glide 内存缓存：首个页面首帧即可命中缓存，避免进二级页才现加载空白
-        WallpaperHelper.preload(this);
+        //
+        // 放到主线程空闲时再执行，不要直接在 onCreate 里调：Glide 的首次初始化
+        // （Engine、磁盘缓存索引、线程池）有一两百毫秒的开销，和 Application.onCreate
+        // 里其它初始化叠在一起，正好压在启动页到首页的渲染窗口上 ——
+        // 实测启动期主线程 "Skipped 30 frames"。空闲回调只会触发一次。
+        android.os.Looper.myQueue().addIdleHandler(() -> {
+            WallpaperHelper.preload(this);
+            return false;   // false = 执行完就移除，不重复
+        });
     }
 
     private void initParams() {

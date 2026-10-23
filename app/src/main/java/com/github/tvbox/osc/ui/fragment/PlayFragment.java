@@ -75,6 +75,7 @@ import com.github.tvbox.osc.util.HawkConfig;
 import com.github.tvbox.osc.util.LOG;
 import com.github.tvbox.osc.util.MD5;
 import com.github.tvbox.osc.util.PlayerHelper;
+import com.github.tvbox.osc.util.Utils;
 import com.github.tvbox.osc.util.VideoParseRuler;
 import com.github.tvbox.osc.util.thunder.Jianpian;
 import com.github.tvbox.osc.util.thunder.Thunder;
@@ -378,6 +379,7 @@ public class PlayFragment extends BaseLazyFragment {
             ImmersionBar.with(mActivity)
                     .hideBar(BarHide.FLAG_HIDE_BAR)
                     .navigationBarColor(R.color.black)//即使隐藏部分时候还是会显示
+                    .navigationBarDarkIcon(false)//黑底配白图标
                     .fitsSystemWindows(false)
                     .init();
         }else {//非全屏统一设置竖屏,activity处理为小的预览尺寸
@@ -385,7 +387,9 @@ public class PlayFragment extends BaseLazyFragment {
 
             ImmersionBar.with(mActivity)
                     .hideBar(BarHide.FLAG_SHOW_BAR)
-                    .navigationBarColor(R.color.white)
+                    // 原来写死 R.color.white：深色主题下退出全屏会在底部留一条白边
+                    .navigationBarColor(R.color.windowBackground)
+                    .navigationBarDarkIcon(!Utils.isDarkTheme())
                     .fitsSystemWindows(true)
                     .init();
         }

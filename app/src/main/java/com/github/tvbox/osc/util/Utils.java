@@ -95,9 +95,45 @@ public class Utils {
         return videoList;
     }
 
+    /**
+     * 当前是否深色主题。
+     *
+     * <p>**以用户保存的 THEME_TAG 为准**，而不是读 Application 的 uiMode 或
+     * {@code AppCompatDelegate.getDefaultNightMode()}：
+     * <ul>
+     *   <li>Application 的配置在主题切换后可能滞后于 Activity（本项目的切换方式是
+     *   「新建 MainActivity + finish 旧的」，Application 并不重建）；</li>
+     *   <li>原来的判断是 {@code uiMode==NIGHT_YES || defaultNightMode==NIGHT_YES}，
+     *   这个「或」会让结果长期偏向深色：从深色切回浅色时 defaultNightMode 已经是
+     *   NIGHT_NO，但 App 的 uiMode 还停在 NIGHT_YES，于是依旧判定为深色，
+     *   状态栏/导航栏图标就按深色渲染，压在浅色背景上几乎看不见。</li>
+     * </ul>
+     * 只有 tag=0（跟随系统）时才回落到系统 uiMode。
+     */
     public static boolean isDarkTheme(){
-        int currentNightMode = App.getInstance().getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK;
-        return currentNightMode == Configuration.UI_MODE_NIGHT_YES || AppCompatDelegate.getDefaultNightMode()==AppCompatDelegate.MODE_NIGHT_YES;
+        try {
+            int tag = Hawk.get(HawkConfig.THEME_TAG, 0);
+            if (tag == 1) return false;
+            if (tag == 2) return true;
+        } catch (Throwable ignored) {
+            // Hawk 还没初始化：继续往下判断
+        }
+        // tag=0（跟随系统）：优先看栈顶 Activity 的配置 —— Activity 的配置会随系统
+        // 深色模式即时更新，而 Application 的 uiMode 在某些机型/时序下会慢一拍。
+        try {
+            android.app.Activity top = com.blankj.utilcode.util.ActivityUtils.getTopActivity();
+            if (top != null) {
+                int mode = top.getResources().getConfiguration().uiMode
+                        & Configuration.UI_MODE_NIGHT_MASK;
+                if (mode == Configuration.UI_MODE_NIGHT_YES) return true;
+                if (mode == Configuration.UI_MODE_NIGHT_NO) return false;
+            }
+        } catch (Throwable ignored) {
+            // ActivityUtils 不可用（多进程/初始化早期）
+        }
+        int currentNightMode = App.getInstance().getResources().getConfiguration().uiMode
+                & Configuration.UI_MODE_NIGHT_MASK;
+        return currentNightMode == Configuration.UI_MODE_NIGHT_YES;
     }
 
     public static void initTheme(){

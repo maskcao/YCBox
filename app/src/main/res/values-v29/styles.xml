@@ -8,6 +8,11 @@
         <item name="colorAccent">@color/colorAccent</item>
         <!--默认window窗口(activity)背景颜色,根据主题修改该属性可 避免某些情况activity跳转/回跳会白屏(出现与主题相反的颜色)-->
         <item name="android:windowBackground">@color/windowBackground</item>
+        <!-- v29 的 AppTheme 是独立的一份定义，默认目录里加的项必须在这里同样补上，
+             否则 API 29+ 会只认这一份、导航栏又退回系统默认黑 -->
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+        <item name="android:navigationBarColor">@color/windowBackground</item>
+        <item name="android:windowLightNavigationBar">@bool/light_system_bar_icon</item>
         <item name="android:forceDarkAllowed">true</item>
     </style>
 </resources>

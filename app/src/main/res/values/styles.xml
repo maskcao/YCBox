@@ -8,12 +8,26 @@
         <item name="colorAccent">@color/colorAccent</item>
         <!--默认window窗口(activity)背景颜色,根据主题修改该属性可 避免某些情况activity跳转/回跳会白屏(出现与主题相反的颜色)-->
         <item name="android:windowBackground">@color/windowBackground</item>
+        <!-- 关键开关：不打开它，下面 navigationBarColor / statusBarColor 这类
+             系统栏颜色在主题里会被系统直接忽略（框架默认是 false）。
+             之前的表现就是：窗口刚创建的头几帧导航栏用系统默认黑，
+             直到代码 addFlags(FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS) 之后才变正常。 -->
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+        <!-- 导航栏（底部手势条）底色：必须显式给值。AppCompat 系列主题的默认值是纯黑，
+             窗口刚创建、或代码还没来得及 setNavigationBarColor 的那几帧就会露出黑条。 -->
+        <item name="android:navigationBarColor">@color/windowBackground</item>
+        <!-- 导航栏图标明暗：浅色主题用深色图标。除了让手势条看得见，这个标志还决定了
+             系统要不要给透明导航栏垫「暗色对比保护层」——不告诉它，系统就会时不时垫一层黑。 -->
+        <item name="android:windowLightNavigationBar">@bool/light_system_bar_icon</item>
     </style>
 
     <style name="SplashTheme" parent="AppTheme">
         <item name="android:windowBackground">@drawable/bg_splash</item>
         <item name="android:windowFullscreen">true</item>
-        <item name="android:windowDrawsSystemBarBackgrounds">false</item>
+        <!-- 原来是 false：窗口不画系统栏背景，导航栏就交给系统按默认黑画，
+             浅色模式下冷启动会先出现一条黑边。改为 true 才能让上面配好的
+             navigationBarColor 真正生效，启动页的导航栏跟页面同色。 -->
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
     </style>
 
     <style name="AppTheme.NoActionBar">

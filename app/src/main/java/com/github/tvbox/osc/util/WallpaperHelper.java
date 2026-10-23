@@ -17,6 +17,7 @@ import android.widget.ImageView;
 
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.DecodeFormat;
 import com.github.tvbox.osc.api.ApiConfig;
 import com.orhanobut.hawk.Hawk;
 
@@ -116,11 +117,32 @@ public final class WallpaperHelper {
     }
 
     private static void loadInto(ImageView iv, File file) {
+        int[] wh = targetSize(iv.getContext());
         Glide.with(iv)
                 .load(file)
                 .signature(signatureOf(file))
+                .format(DecodeFormat.PREFER_RGB_565)
+                // 必须显式 override：ImageView 是 MATCH_PARENT，Glide 测量出来的
+                // 尺寸与 preload 时用的尺寸只要差一个像素，缓存 key 就不一样，
+                // 预热等于白做（会重新解码一次）。
+                .override(wh[0], wh[1])
                 .centerCrop()
                 .into(iv);
+    }
+
+    /**
+     * 壁纸解码的目标尺寸：屏幕宽高。
+     *
+     * <p>这里必须给一个明确尺寸，不能让 Glide 走默认的 {@code SIZE_ORIGINAL}。
+     * 壁纸是用户从相册选的原图，动辄 4000×3000；按原尺寸解码成 ARGB_8888 就是
+     * 48MB 一张，低内存设备（1~2GB 的盒子）在启动阶段直接把堆顶满，
+     * 表现为连续 GC、界面卡住不动。
+     *
+     * <p>壁纸不需要透明通道，统一用 RGB_565，同样的尺寸再省一半。
+     */
+    private static int[] targetSize(Context context) {
+        android.util.DisplayMetrics dm = context.getResources().getDisplayMetrics();
+        return new int[]{Math.max(1, dm.widthPixels), Math.max(1, dm.heightPixels)};
     }
 
     /**
@@ -131,19 +153,29 @@ public final class WallpaperHelper {
         if (!isEnabled() || !hasWallpaper(context)) return;
         File file = new File(Hawk.get(HawkConfig.WALLPAPER_PATH, ""));
         if (!file.exists() || file.length() <= 0) return;
+        int[] wh = targetSize(context);
         if (!isBlurEnabled()) {
             Glide.with(context.getApplicationContext())
-                    .load(file).signature(signatureOf(file)).centerCrop().preload();
+                    .load(file).signature(signatureOf(file))
+                    .format(DecodeFormat.PREFER_RGB_565)
+                    .override(wh[0], wh[1])
+                    .centerCrop().preload();
             return;
         }
         // 虚化开着：预热虚化图；若还没生成，则先预热原图并顺手在后台生成虚化图
         File blurred = blurFile(context);
         if (isBlurFresh(context, blurred, file)) {
             Glide.with(context.getApplicationContext())
-                    .load(blurred).signature(signatureOf(blurred)).centerCrop().preload();
+                    .load(blurred).signature(signatureOf(blurred))
+                    .format(DecodeFormat.PREFER_RGB_565)
+                    .override(wh[0], wh[1])
+                    .centerCrop().preload();
         } else {
             Glide.with(context.getApplicationContext())
-                    .load(file).signature(signatureOf(file)).centerCrop().preload();
+                    .load(file).signature(signatureOf(file))
+                    .format(DecodeFormat.PREFER_RGB_565)
+                    .override(wh[0], wh[1])
+                    .centerCrop().preload();
             buildBlurAsync(context, file, null);
         }
     }
@@ -513,5 +545,144 @@ public final class WallpaperHelper {
 
     public interface OnResult {
         void onResult(boolean ok, String message);
+    }
+
+    // ==================== 导航栏取色 ====================
+
+    private static volatile int sNavColor = 0;
+    private static volatile long sNavColorKey = -1;
+    /**
+     * 上一次计算时是深色还是浅色。
+     *
+     * <p>缓存必须带上主题维度：壁纸取样色算完还要按 {@code wallpaper_scrim} 混合，
+     * 而遮罩色深浅主题不一样（浅色 #B3FFFFFF / 深色 #B3000000）。之前 key 只放了
+     * 壁纸文件 mtime，于是「浅色下算出的近白色」会被深色主题直接复用 ——
+     * 切深色后底部导航栏仍是白条，但手势条图标已按深色渲染成黑色，
+     * 看起来就是白底黑条，非常刺眼。壁纸图片本身没换时这个缓存永远不会失效。
+     */
+    private static volatile boolean sNavColorDark = false;
+
+    /**
+     * 壁纸模式下导航栏（底部手势条）该用什么底色。
+     *
+     * <p>原来这里返回 {@link android.graphics.Color#TRANSPARENT}，想让壁纸直接铺到手势条后面。
+     * 但透明导航栏有个致命副作用：切主题会 recreate Activity，新窗口是"先显示、后绘制"
+     * （isReadyForDisplay()=false），透明的那一条会**透出下面还没销毁的旧窗口** ——
+     * 深色→浅色时就是一条黑带，等旧窗口销毁才消失，所以看起来"只是短暂闪一下"。
+     *
+     * <p>改法：不让它透明。取壁纸底部一小块的平均色，再叠上与页面同一层的遮罩色，
+     * 得到一条与壁纸底部几乎同色的**不透明**底 —— 视觉上仍然像壁纸铺到了手势条后面，
+     * 但窗口重建期间没有任何东西会透出来。结果按壁纸文件 mtime 缓存，换壁纸自动失效。
+     */
+    public static int navBarColor(Context context) {
+        return navBarColor(context, isDarkTheme(context));
+    }
+
+    /**
+     * @param dark 当前是否为深色主题。**必须由调用方传入 Activity 自身的配置**
+     *             （见 {@code BaseActivity#isDarkNow()}），不要用 Application 级配置推断：
+     *             主题切换后 Application 的 uiMode 可能还停留在切换前的值。
+     */
+    public static int navBarColor(Context context, boolean dark) {
+        String path = Hawk.get(HawkConfig.WALLPAPER_PATH, "");
+        if (TextUtils.isEmpty(path)) {
+            return androidx.core.content.ContextCompat.getColor(context, com.github.tvbox.osc.R.color.windowBackground);
+        }
+        File src = new File(path);
+        if (!src.exists() || src.length() <= 0) {
+            return androidx.core.content.ContextCompat.getColor(context, com.github.tvbox.osc.R.color.windowBackground);
+        }
+        long key = src.lastModified();
+        int cached = sNavColor;
+        if (cached != 0 && sNavColorKey == key && sNavColorDark == dark) return cached;
+
+        int color;
+        try {
+            color = computeNavColor(context, src, dark);
+        } catch (Throwable th) {
+            android.util.Log.e("Wallpaper", "取导航栏颜色失败", th);
+            color = androidx.core.content.ContextCompat.getColor(context, com.github.tvbox.osc.R.color.windowBackground);
+        }
+        // 必须不透明：只要留一点 alpha，切主题时就又会透出下面的旧窗口
+        color = 0xFF000000 | (color & 0x00FFFFFF);
+        sNavColor = color;
+        sNavColorKey = key;
+        sNavColorDark = dark;
+        return color;
+    }
+
+    /** 用 Context 自身的资源配置判断深浅色（主题切换后 Activity 的配置是权威值） */
+    public static boolean isDarkTheme(Context context) {
+        if (context == null) return false;
+        return (context.getResources().getConfiguration().uiMode
+                & android.content.res.Configuration.UI_MODE_NIGHT_MASK)
+                == android.content.res.Configuration.UI_MODE_NIGHT_YES;
+    }
+
+    /**
+     * 取遮罩色，并保证明暗方向与主题一致。
+     *
+     * <p>正常情况下 {@code wallpaper_scrim} 会由 values / values-night 自动给出正确值；
+     * 这里再做一次方向校验：万一资源没跟着主题走（历史上出现过这种半生效状态），
+     * 深色主题下也不会把近白色的遮罩混进来，导致底部亮出一条白边。
+     */
+    private static int scrimColor(Context context, boolean dark) {
+        int scrim = androidx.core.content.ContextCompat.getColor(
+                context, com.github.tvbox.osc.R.color.wallpaper_scrim);
+        float lum = 0.299f * android.graphics.Color.red(scrim)
+                + 0.587f * android.graphics.Color.green(scrim)
+                + 0.114f * android.graphics.Color.blue(scrim);
+        boolean scrimIsLight = lum > 128f;
+        if (scrimIsLight == dark) {
+            // 方向反了：深色主题拿到浅色遮罩，或浅色主题拿到深色遮罩
+            return dark ? 0xB3000000 : 0xB3FFFFFF;
+        }
+        return scrim;
+    }
+
+    /** 壁纸底部若干行的平均色，再按遮罩的 alpha 与遮罩色混合 */
+    private static int computeNavColor(Context context, File src, boolean dark) {
+        // 优先用已经生成好的虚化图：只有 160px 宽，解码几乎零成本
+        File blurred = blurFile(context);
+        File sample = (blurred.exists() && blurred.length() > 0 && isBlurFresh(context, blurred, src))
+                ? blurred : src;
+        Bitmap small = decodeSmall(sample, 48);
+        if (small == null) {
+            return androidx.core.content.ContextCompat.getColor(context, com.github.tvbox.osc.R.color.windowBackground);
+        }
+        int w = small.getWidth();
+        int h = small.getHeight();
+        // 只取底部 12%（至少 2 行）：centerCrop 铺满时，这一块对应的就是手势条上方那一条
+        int rows = Math.max(2, Math.round(h * 0.12f));
+        long sumR = 0, sumG = 0, sumB = 0;
+        int count = 0;
+        for (int y = h - rows; y < h; y++) {
+            for (int x = 0; x < w; x++) {
+                int p = small.getPixel(x, y);
+                sumR += (p >> 16) & 0xFF;
+                sumG += (p >> 8) & 0xFF;
+                sumB += p & 0xFF;
+                count++;
+            }
+        }
+        small.recycle();
+        if (count == 0) {
+            return androidx.core.content.ContextCompat.getColor(context, com.github.tvbox.osc.R.color.windowBackground);
+        }
+        int r = (int) (sumR / count);
+        int g = (int) (sumG / count);
+        int b = (int) (sumB / count);
+
+        // 页面上的壁纸还盖着一层 wallpaper_scrim（浅色 #B3FFFFFF / 深色 #B3000000），
+        // 导航栏要和"看到的壁纸"同色，所以这里做同样的混合，否则会比页面明显深一档。
+        int scrim = scrimColor(context, dark);
+        float a = android.graphics.Color.alpha(scrim) / 255f;
+        int sr = android.graphics.Color.red(scrim);
+        int sg = android.graphics.Color.green(scrim);
+        int sb = android.graphics.Color.blue(scrim);
+        r = Math.round(r * (1 - a) + sr * a);
+        g = Math.round(g * (1 - a) + sg * a);
+        b = Math.round(b * (1 - a) + sb * a);
+        return (0xFF << 24) | (r << 16) | (g << 8) | b;
     }
 }

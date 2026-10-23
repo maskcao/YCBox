@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 系统栏（导航栏/手势条）图标是否用深色。
+         浅色主题下页面是白的，图标必须画成深色才看得见；
+         同时这个标志也告诉系统「背景是浅的，不需要再加暗色对比保护层」。
+         深色主题下由 values-night/bools.xml 覆盖为 false。 -->
+    <bool name="light_system_bar_icon">true</bool>
+</resources>

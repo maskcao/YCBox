@@ -148,7 +148,9 @@ public class DetailActivity extends BaseVbActivity<ActivityDetailBinding> {
         registerReceiver(mBatteryReceiver, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
         ImmersionBar.with(this)
                 .statusBarColor(R.color.black)
-                .navigationBarColor(R.color.white)
+                // 原来写死 R.color.white：深色主题下详情页底部会留一条白边
+                .navigationBarColor(R.color.windowBackground)
+                .navigationBarDarkIcon(!Utils.isDarkTheme())
                 .fitsSystemWindows(true)
                 .statusBarDarkFont(false)
                 .init();

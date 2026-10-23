@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 夜间启动页。
+     原 bg_splash 写死 @color/white 且没有 night 版本，夜间模式冷启动会先闪一屏白再进深色主界面。
+     这里用夜间底色 + 居中的白色圆角卡片承载插画（插画本身是不透明白底，
+     直接铺在深色上会是一块突兀的白方块）。 -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="@color/windowBackground" />
+        </shape>
+    </item>
+
+    <item
+        android:width="200dp"
+        android:height="200dp"
+        android:gravity="center">
+        <shape android:shape="rectangle">
+            <solid android:color="#FFFFFFFF" />
+            <corners android:radius="22dp" />
+        </shape>
+    </item>
+
+    <item android:gravity="center">
+        <bitmap
+            android:gravity="center"
+            android:src="@drawable/iv_splash_small" />
+    </item>
+</layer-list>
