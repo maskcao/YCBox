@@ -41,6 +41,8 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -320,36 +322,71 @@ public class ApiConfig {
                 if (jarLoader.load(cache.getAbsolutePath())) {
                     callback.success();
                 } else {
-                    callback.error("");
+                    callback.error("本地爬虫库加载失败（可能和当前系统不兼容）");
                 }
                 return;
             }
         }
 
+        // 订阅声明的 md5 正好就是 APK 里打包的那一份：没必要再走网络。
+        // 源站的 jar 地址大多是带日期的临时 OSS 路径，国内手机网络经常拿不到，
+        // 一旦拉失败，99 个站点全是爬虫型，首页就直接空掉。
+        if (!md5.isEmpty() && loadBundledJar(md5)) {
+            callback.success();
+            return;
+        }
+
         boolean isJarInImg = jarUrl.startsWith("img+");
         jarUrl = jarUrl.replace("img+", "");
+        final String expectMd5 = md5;
         OkGo.<File>get(jarUrl)
                 .headers("User-Agent", userAgent)
                 .headers("Accept", requestAccept)
                 .execute(new AbsCallback<File>() {
 
+            /**
+             * 下载内容验过之后再替换本地缓存。
+             *
+             * <p>订阅里的 spider 地址多是各家 OSS 的临时路径（带日期那种），过期后照样
+             * 回 200 + 一小段 HTML 错误页。老逻辑不加判断直接写进 csp.jar，等于把一份
+             * 本来还能用的爬虫库覆盖成垃圾。所以这里：不像压缩包就拒、配置声明了 md5
+             * 就必须对上、写盘走临时文件 rename，中途失败也不会碰旧文件。
+             */
             @Override
             public File convertResponse(okhttp3.Response response) throws Throwable {
+                byte[] data = isJarInImg
+                        ? getImgJar(response.body().string())
+                        : response.body().bytes();
+                if (data.length < 1024) {
+                    throw new IOException("返回内容不像爬虫库（只有 " + data.length + " 字节），地址多半已失效");
+                }
+                if (data[0] != 'P' || data[1] != 'K') {
+                    throw new IOException("返回内容不是爬虫库（开头 0x"
+                            + Integer.toHexString(data[0] & 0xFF) + Integer.toHexString(data[1] & 0xFF)
+                            + "，共 " + data.length + " 字节）");
+                }
                 File cacheDir = cache.getParentFile();
                 if (!cacheDir.exists())
                     cacheDir.mkdirs();
-                if (cache.exists())
-                    cache.delete();
-                FileOutputStream fos = new FileOutputStream(cache);
-                if(isJarInImg) {
-                    String respData = response.body().string();
-                    byte[] imgJar = getImgJar(respData);
-                    fos.write(imgJar);
-                } else {
-                    fos.write(response.body().bytes());
-                }
+                File tmp = new File(cacheDir, "csp.jar.tmp");
+                if (tmp.exists())
+                    tmp.delete();
+                FileOutputStream fos = new FileOutputStream(tmp);
+                fos.write(data);
                 fos.flush();
                 fos.close();
+                if (!expectMd5.isEmpty()) {
+                    String got = MD5.getFileMd5(tmp);
+                    if (!expectMd5.equalsIgnoreCase(got)) {
+                        tmp.delete();
+                        throw new IOException("爬虫库校验不通过（期望 " + expectMd5 + "，实际 " + got + "）");
+                    }
+                }
+                cache.delete();
+                if (!tmp.renameTo(cache)) {
+                    tmp.delete();
+                    throw new IOException("爬虫库写入本地失败");
+                }
                 return cache;
             }
 
@@ -359,19 +396,73 @@ public class ApiConfig {
                     if (jarLoader.load(response.body().getAbsolutePath())) {
                         callback.success();
                     } else {
-                        callback.error("");
+                        callback.error("爬虫库加载失败（版本或系统不兼容）");
                     }
                 } else {
-                    callback.error("");
+                    callback.error("爬虫库写入本地失败");
                 }
             }
 
             @Override
             public void onError(Response<File> response) {
                 super.onError(response);
-                callback.error("");
+                Throwable ex = response.getException();
+                String why = ex != null ? ex.getMessage() : null;
+                if (TextUtils.isEmpty(why)) {
+                    why = "HTTP " + (response.getRawResponse() != null ? response.getRawResponse().code() : "?");
+                }
+                // 新的一份没拿到不代表不能用：本地那份旧的还能加载就继续跑，
+                // 免得一次下载失败把已经能用的站点分类一起打掉。
+                if (cache.exists() && jarLoader.load(cache.getAbsolutePath())) {
+                    callback.success();
+                    return;
+                }
+                if (loadBundledJar(expectMd5)) {
+                    callback.success();
+                    return;
+                }
+                callback.error("爬虫库拉取失败：" + why);
             }
         });
+    }
+
+    /** APK 自带的兜底爬虫库，见 {@link #loadBundledJar(String)}。 */
+    private static final String BUNDLED_JAR = "csp.jar";
+
+    /**
+     * 加载打包在 APK 里的爬虫库，并落到 files/csp.jar（下次启动直接命中本地缓存）。
+     *
+     * <p>expectMd5 非空且和自带的这份对不上时不加载：宁可不给爬虫，也不能拿旧版
+     * 爬虫去接新站，那样只会解析出错、看起来像"源坏了"。
+     */
+    private boolean loadBundledJar(String expectMd5) {
+        File cache = new File(App.getInstance().getFilesDir().getAbsolutePath() + "/csp.jar");
+        if (cache.exists() && MD5.getFileMd5(cache).equalsIgnoreCase(expectMd5)) {
+            return jarLoader.load(cache.getAbsolutePath());
+        }
+        File tmp = new File(cache.getParentFile(), "csp.jar.asset.tmp");
+        try (InputStream is = App.getInstance().getAssets().open(BUNDLED_JAR);
+             FileOutputStream fos = new FileOutputStream(tmp)) {
+            byte[] buf = new byte[8192];
+            int len;
+            while ((len = is.read(buf)) > 0) {
+                fos.write(buf, 0, len);
+            }
+            fos.flush();
+        } catch (Throwable e) {
+            tmp.delete();
+            return false;
+        }
+        if (!TextUtils.isEmpty(expectMd5) && !expectMd5.equalsIgnoreCase(MD5.getFileMd5(tmp))) {
+            tmp.delete();
+            return false;
+        }
+        cache.delete();
+        if (!tmp.renameTo(cache)) {
+            tmp.delete();
+            return false;
+        }
+        return jarLoader.load(cache.getAbsolutePath());
     }
 
     /**

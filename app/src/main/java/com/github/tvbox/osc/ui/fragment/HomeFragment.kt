@@ -354,10 +354,12 @@ class HomeFragment : BaseVbFragment<FragmentHomeBinding>() {
 
                     override fun retry() {}
                     override fun error(msg: String) {
-                        jarInitOk = true
+                        // 爬虫库拿不到 = 站点分类一个都出不来（内置源 99 个站点全是爬虫型）。
+                        // 原来这里只弹一句"更新订阅失败"的 toast，页面接着空白，谁也说不出
+                        // 是哪一步坏了；换成和拉配置一致的失败弹窗，把原因写在上面。
+                        // jarInitOk 保持 false，弹窗点「重试」会重新走一遍下载。
                         mHandler.post {
-                            ToastUtils.showShort("更新订阅失败")
-                            initData()
+                            showTipDialog(if (msg.isEmpty()) "爬虫库加载失败" else msg)
                         }
                     }
                 })
