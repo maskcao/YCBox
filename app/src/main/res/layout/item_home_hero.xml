@@ -9,9 +9,10 @@
      压了也白压。想留下暗带又不糊图，就得把它的最暗处顶到溶边上沿，那等于在图片
      中间挂一条黑杠——所以暗带整条删掉。
 
-     文字压在雾化带上，背景可能是亮海报也可能是亮壁纸，两种主题都得看清：
-     字色和描影按主题成对翻转（@color/hero_caption_*），描影永远比字更亮或更暗，
-     相当于给字套一圈光环；指示器另外垫一条半透明胶囊，底色和点色成对翻转。 -->
+     文字块整块压在雾化带上，字色按主题成对翻转（@color/hero_caption_*）：这一段
+     透出的是壁纸，不再是海报，所以不给字加描影 —— 实测 20dp 的描影在深色海报上
+     糊成一团黑雾，比它换来的可读性显眼得多。指示器另有一条半透明胶囊，
+     底色和点色成对翻转。 -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/heroRoot"
@@ -55,10 +56,6 @@
             android:ellipsize="end"
             android:gravity="center"
             android:maxLines="1"
-            android:shadowColor="@color/hero_caption_shadow"
-            android:shadowDx="0"
-            android:shadowDy="3"
-            android:shadowRadius="20"
             android:textColor="@color/hero_caption_title"
             android:textSize="24sp"
             android:textStyle="bold"
@@ -71,10 +68,6 @@
             android:layout_marginTop="6dp"
             android:ellipsize="end"
             android:maxLines="1"
-            android:shadowColor="@color/hero_caption_shadow"
-            android:shadowDx="0"
-            android:shadowDy="2"
-            android:shadowRadius="16"
             android:textColor="@color/hero_caption_note"
             android:textSize="15sp"
             tools:text="评分：8.6 · 2024 · 内地 · 古装" />
