@@ -37,15 +37,13 @@ class HeroFadeLayout @JvmOverloads constructor(
         val fadePx = FADE_DP * resources.displayMetrics.density
         fadeTop = h - fadePx
         // DST_OUT 只看 src 的 alpha：底边 alpha=255 全抹掉，往上 alpha=0 原样保留。
-        // 前紧后松而非线性：海报自带的「生日快乐」「x月x日起」这类 logo 就压在底边
-        // 那一截（实测到图片下沿往上约 250px），线性到 35% 高度才抹掉九成五，
-        // logo 上半截还清清楚楚地糊在片名后面；所以把 95% 那个点提到 35%、
-        // 86% 那个点顶到 78%，让 logo 整段在过渡区上半部就消失，
-        // 剩下的高度再用最后一段平缓收到 0，避免过渡区自己变成一条边。
+        // 曲线走平缓：以前把 95% 那个点顶到过渡区 35% 高度，等于让海报底下大半截
+        // 提前化掉，深色底角（《玉簟秋》左右两块）就浮在带上变成两团发虚的黑影。
+        // 现在按高度均匀收口，只有贴近下沿那一段才真的透明。
         fadePaint.shader = LinearGradient(
             0f, h.toFloat(), 0f, fadeTop,
-            intArrayOf(0xFF000000.toInt(), 0xF2000000.toInt(), 0xD9000000.toInt(), 0),
-            floatArrayOf(0f, 0.35f, 0.78f, 1f),
+            intArrayOf(0xFF000000.toInt(), 0xCC000000.toInt(), 0x66000000.toInt(), 0),
+            floatArrayOf(0f, 0.35f, 0.7f, 1f),
             Shader.TileMode.CLAMP
         )
     }
@@ -66,11 +64,10 @@ class HeroFadeLayout @JvmOverloads constructor(
 
     companion object {
         /**
-         * 溶掉的高度。文字块现在整块压在雾化带里（下内边距只有 2dp），靠按主题成对翻转
-         * 的字色读清（文字不带描影），不再要求它待在实图上。
-         * 再往上调（试过 128dp）雾化带就吃掉片名那一行，浅色海报上直接看不清；
-         * 再往下调（试过 72dp）海报自带的「x月x日起」会露出来一截。
+         * 溶掉的高度。只收底边这一段：再深（试过 96dp）就把海报下半截一起化掉，
+         * 海报自带的深色底角会浮在带上变成两团黑影，片名也失去可依托的实图；
+         * 再浅（试过 32dp）底边收得太急，接缝自己成了一条边。
          */
-        private const val FADE_DP = 96f
+        private const val FADE_DP = 56f
     }
 }

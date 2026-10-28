@@ -3,16 +3,15 @@
      高度在 HeroVH 里按外层列表视口 * HERO_VIEWPORT_RATIO 动态设定，XML 里的 360dp
      只是预览占位。
 
-     底边只有一层：HeroFadeLayout 把底边 96dp 连图一起溶成透明，直接透出壁纸。
-     这里以前还压了一条 320dp 的暗带垫文字，但 hero 压到视口六成出头之后它仍盖住
-     大半张可见海报，整张图糊成一片灰黑；而它最暗的一档正好落在被溶掉的那一段里，
-     压了也白压。想留下暗带又不糊图，就得把它的最暗处顶到溶边上沿，那等于在图片
-     中间挂一条黑杠——所以暗带整条删掉。
+     底边只有一层：HeroFadeLayout 把底边 56dp 连图一起溶成透明，直接透出壁纸，
+     不留硬边。以前这条带子是 96dp 且收得很急，海报自带的深色底角被抹成半透明后
+     浮在带上，看着就是左右两团发虚的黑影；现在只收底边一小段，图还是那张图。
+     （更早还压过一条 320dp 的暗带垫文字，hero 压到视口六成出头之后它盖住大半张
+     可见海报，整张图糊成一片灰黑——所以暗带整条删掉。）
 
-     文字块整块压在雾化带上，字色按主题成对翻转（@color/hero_caption_*）：这一段
-     透出的是壁纸，不再是海报，所以不给字加描影 —— 实测 20dp 的描影在深色海报上
-     糊成一团黑雾，比它换来的可读性显眼得多。指示器另有一条半透明胶囊，
-     底色和点色成对翻转。 -->
+     片名和评分压在海报上，只有最底一段跟着溶进壁纸。海报明暗不固定，两种主题都得
+     看清：字色和描影按主题成对翻转（@color/hero_caption_*），描影永远比字更亮或更
+     暗，相当于给字套一圈光环。指示器另有一条半透明胶囊，底色和点色成对翻转。 -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/heroRoot"
@@ -56,6 +55,10 @@
             android:ellipsize="end"
             android:gravity="center"
             android:maxLines="1"
+            android:shadowColor="@color/hero_caption_shadow"
+            android:shadowDx="0"
+            android:shadowDy="3"
+            android:shadowRadius="20"
             android:textColor="@color/hero_caption_title"
             android:textSize="24sp"
             android:textStyle="bold"
@@ -68,6 +71,10 @@
             android:layout_marginTop="6dp"
             android:ellipsize="end"
             android:maxLines="1"
+            android:shadowColor="@color/hero_caption_shadow"
+            android:shadowDx="0"
+            android:shadowDy="2"
+            android:shadowRadius="16"
             android:textColor="@color/hero_caption_note"
             android:textSize="15sp"
             tools:text="评分：8.6 · 2024 · 内地 · 古装" />
