@@ -1,6 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- NewBox 首页 hero：整屏通栏大图轮播，底部居中片名/评分 + 胶囊指示器。
-     高度在 HeroVH 里按外层列表视口动态设定，XML 里的 360dp 只是预览占位。 -->
+<!-- 首页 hero：通栏大图轮播，底部居中片名/评分 + 胶囊指示器。
+     高度在 HeroVH 里按外层列表视口 * HERO_VIEWPORT_RATIO 动态设定，XML 里的 360dp
+     只是预览占位。
+
+     底边两层：
+     - 压暗带（320dp，从底边最暗往上单调渐隐）垫住片名/评分/指示器，放在
+       HeroFadeLayout *里面*；
+     - HeroFadeLayout 再把底边 110dp 连图带暗带一起溶成透明，直接透出壁纸。
+     两层都得在：暗带单独用会在接缝处留下「黑带撞灰底」的硬边；溶层单独用，
+     海报自带的片名 logo 会糊在过渡区。暗带也不能做成两头渐隐、中间最深，
+     那等于在图片中间挂一条黑杠。
+     片名/指示器贴着交接处：下内边距 56dp，指示器落在被溶掉的那一段里，
+     片名主体在溶边之上、由暗带托住。 -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/heroRoot"
@@ -10,22 +21,28 @@
     android:focusable="false"
     android:clipChildren="true">
 
-    <androidx.viewpager2.widget.ViewPager2
-        android:id="@+id/heroPager"
+    <com.github.tvbox.osc.ui.widget.HeroFadeLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent">
 
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="200dp"
-        android:layout_gravity="top"
-        android:background="@drawable/bg_hero_top_scrim" />
+        <androidx.viewpager2.widget.ViewPager2
+            android:id="@+id/heroPager"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
 
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="400dp"
-        android:layout_gravity="bottom"
-        android:background="@drawable/bg_hero_scrim" />
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="320dp"
+            android:layout_gravity="bottom"
+            android:background="@drawable/bg_hero_scrim" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="160dp"
+            android:layout_gravity="top"
+            android:background="@drawable/bg_hero_top_scrim" />
+
+    </com.github.tvbox.osc.ui.widget.HeroFadeLayout>
 
     <LinearLayout
         android:id="@+id/heroCaption"
@@ -34,7 +51,7 @@
         android:layout_gravity="bottom"
         android:orientation="vertical"
         android:paddingHorizontal="24dp"
-        android:paddingBottom="96dp">
+        android:paddingBottom="56dp">
 
         <TextView
             android:id="@+id/heroTitle"

@@ -79,6 +79,16 @@ public class UserFragment extends BaseLazyFragment {
     /** hero 最多展示的推荐条数：再多轮播既费流量也没人看完 */
     private static final int HERO_LIMIT = 10;
 
+    /** hero 高度占列表视口的比例；1.0 即 NewBox 的整屏大图 */
+    private static final float HERO_VIEWPORT_RATIO = 0.62f;
+
+    /**
+     * hero 轮播的循环倍数。ViewPager2 自己没有「首尾相接」，把条目数放大成 N 轮、
+     * 起始落在中间那一轮，两头就都还剩几十轮可滑，滑到本轮最后一张再往前自然
+     * 就是下一轮的第一张。100 轮足够没人真滑到头，也不会让位置溢出 int。
+     */
+    private static final int HERO_LOOP_TIMES = 100;
+
     private final List<Section> mSections = new ArrayList<>();
     private final ArrayList<Movie.Video> mHeroVideos = new ArrayList<>();
     private final Handler mRetryHandler = new Handler(Looper.getMainLooper());
@@ -396,9 +406,14 @@ public class UserFragment extends BaseLazyFragment {
         View hero = tvHotList1.findViewHolderForAdapterPosition(0) != null
                 ? tvHotList1.findViewHolderForAdapterPosition(0).itemView : null;
         if (hero != null) pager = hero.findViewById(R.id.heroPager);
-        int index = pager == null ? 0 : pager.getCurrentItem();
-        if (index < 0 || index >= mHeroVideos.size()) index = 0;
+        int index = pager == null ? 0 : heroRealPage(pager.getCurrentItem());
         return mHeroVideos.get(index);
+    }
+
+    /** 循环适配器里的位置 -> 真实第几张推荐 */
+    private int heroRealPage(int loopPosition) {
+        int count = mHeroVideos.size();
+        return count == 0 ? 0 : Math.floorMod(loopPosition, count);
     }
 
     private class HeroPagerAdapter extends RecyclerView.Adapter<HeroPageVH> {
@@ -412,7 +427,7 @@ public class UserFragment extends BaseLazyFragment {
 
         @Override
         public void onBindViewHolder(@NonNull HeroPageVH holder, int position) {
-            Movie.Video vod = mHeroVideos.get(position);
+            Movie.Video vod = mHeroVideos.get(heroRealPage(position));
             ThumbLoader.loadLarge(holder.poster, vod.pic);
             holder.itemView.setOnClickListener(v -> onVodClickStatic(vod));
             holder.itemView.setOnLongClickListener(v -> {
@@ -423,7 +438,8 @@ public class UserFragment extends BaseLazyFragment {
 
         @Override
         public int getItemCount() {
-            return mHeroVideos.size();
+            int count = mHeroVideos.size();
+            return count == 0 ? 0 : count * HERO_LOOP_TIMES;
         }
     }
 
@@ -445,9 +461,11 @@ public class UserFragment extends BaseLazyFragment {
         private final Runnable autoScroll = new Runnable() {
             @Override
             public void run() {
-                int count = mHeroVideos.size();
-                if (count > 1) {
-                    pager.setCurrentItem((pager.getCurrentItem() + 1) % count, true);
+                if (mHeroVideos.size() > 1) {
+                    // 只往前走：循环适配器里「最后一张的下一张」就是下一轮的第一张，
+                    // 平滑滚动始终是正向。以前写成 (cur + 1) % count，滑到最后一张
+                    // 时动画会倒着把中间几张全部退回去
+                    pager.setCurrentItem(pager.getCurrentItem() + 1, true);
                     handler.postDelayed(this, 5000);
                 }
             }
@@ -459,13 +477,16 @@ public class UserFragment extends BaseLazyFragment {
             title = itemView.findViewById(R.id.heroTitle);
             note = itemView.findViewById(R.id.heroNote);
             dots = itemView.findViewById(R.id.heroDots);
-            // NewBox 的 hero 占满整屏：列表视口多高，图就多高，滚动时下一分区从底部顶进来
+            // NewBox 的 hero 占满整屏，首屏就只剩一个可点项；这里收到视口的 62%，
+            // 让下一个分区的标题和第一行海报顶部从底边露进来——既补回信息量，
+            // 露出的半截图本身就是「还能往下滑」的暗示
             int viewport = tvHotList1.getHeight();
             if (viewport > 0) {
-                itemView.getLayoutParams().height = viewport;
+                itemView.getLayoutParams().height = Math.round(viewport * HERO_VIEWPORT_RATIO);
             }
             pager.setOffscreenPageLimit(1);
             pager.setAdapter(new HeroPagerAdapter());
+            alignToLoop();
             pager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
                 @Override
                 public void onPageSelected(int position) {
@@ -479,11 +500,18 @@ public class UserFragment extends BaseLazyFragment {
             });
         }
 
+        /** 落到中间那一轮，两边各留一半可滑，滑到本轮最后一张才能继续往前接上第一张 */
+        void alignToLoop() {
+            int count = mHeroVideos.size();
+            if (count == 0) return;
+            int real = heroRealPage(pager.getCurrentItem());
+            int middle = real + count * (HERO_LOOP_TIMES / 2);
+            if (pager.getCurrentItem() != middle) pager.setCurrentItem(middle, false);
+        }
+
         void bind() {
             if (pager.getAdapter() != null) pager.getAdapter().notifyDataSetChanged();
-            if (mHeroVideos.size() > 0 && pager.getCurrentItem() >= mHeroVideos.size()) {
-                pager.setCurrentItem(0, false);
-            }
+            alignToLoop();
             rebuildDots();
             updateCaption(pager.getCurrentItem());
             startAuto();
@@ -496,7 +524,7 @@ public class UserFragment extends BaseLazyFragment {
             int gap = ConvertUtils.dp2px(5f);
             for (int i = 0; i < mHeroVideos.size(); i++) {
                 ImageView dot = new ImageView(itemView.getContext());
-                boolean selected = i == pager.getCurrentItem();
+                boolean selected = i == heroRealPage(pager.getCurrentItem());
                 dot.setBackgroundResource(selected
                         ? R.drawable.dot_hero_selected : R.drawable.dot_hero_normal);
                 LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
@@ -508,8 +536,8 @@ public class UserFragment extends BaseLazyFragment {
 
         void updateCaption(int position) {
             if (mHeroVideos.isEmpty()) return;
-            if (position < 0 || position >= mHeroVideos.size()) position = 0;
-            Movie.Video vod = mHeroVideos.get(position);
+            int real = heroRealPage(position);
+            Movie.Video vod = mHeroVideos.get(real);
             title.setText(vod.name == null ? "" : vod.name);
             String subtitle = heroSubtitle(vod);
             if (TextUtils.isEmpty(subtitle)) {
@@ -520,7 +548,7 @@ public class UserFragment extends BaseLazyFragment {
             }
             for (int i = 0; i < dots.getChildCount(); i++) {
                 View dot = dots.getChildAt(i);
-                boolean selected = i == position;
+                boolean selected = i == real;
                 dot.setBackgroundResource(selected
                         ? R.drawable.dot_hero_selected : R.drawable.dot_hero_normal);
                 LinearLayout.LayoutParams lp = (LinearLayout.LayoutParams) dot.getLayoutParams();
