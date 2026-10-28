@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- hero 指示器的底：小圆点直接放在海报上没有稳定的对比度，亮海报上整排消失。
+     给这一小条垫个胶囊比给整张图压暗带便宜得多。胶囊和点按主题成对翻转：
+     浅色主题深底白点，深色主题白底深点（见 colors 里的 hero_dot_*）。 -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <corners android:radius="10dp" />
+    <solid android:color="@color/hero_dot_pill" />
+</shape>

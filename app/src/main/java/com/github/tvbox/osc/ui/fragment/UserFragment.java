@@ -1,6 +1,7 @@
 package com.github.tvbox.osc.ui.fragment;
 
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -79,8 +80,10 @@ public class UserFragment extends BaseLazyFragment {
     /** hero 最多展示的推荐条数：再多轮播既费流量也没人看完 */
     private static final int HERO_LIMIT = 10;
 
-    /** hero 高度占列表视口的比例；1.0 即 NewBox 的整屏大图 */
-    private static final float HERO_VIEWPORT_RATIO = 0.62f;
+    /** hero 高度占列表视口的比例；1.0 即 NewBox 的整屏大图。
+     *  底栏文字（片名/评分/指示器）钉在 hero 底边，列表里又没有可借用的高度，
+     *  想让文字再往下走只能把这一档抬高一点。 */
+    private static final float HERO_VIEWPORT_RATIO = 0.64f;
 
     /**
      * hero 轮播的循环倍数。ViewPager2 自己没有「首尾相接」，把条目数放大成 N 轮、
@@ -477,6 +480,12 @@ public class UserFragment extends BaseLazyFragment {
             title = itemView.findViewById(R.id.heroTitle);
             note = itemView.findViewById(R.id.heroNote);
             dots = itemView.findViewById(R.id.heroDots);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                // AppTheme 显式开了 android:forceDarkAllowed，而主题父级是 MaterialComponents.Light，
+                // 系统夜间下平台会把浅色背景反成深色：胶囊 #B3FFFFFF 实测画出来是近黑。
+                // 本应用自己走 values-night 配色，这块单独退出强制深色。
+                dots.setForceDarkAllowed(false);
+            }
             // NewBox 的 hero 占满整屏，首屏就只剩一个可点项；这里收到视口的 62%，
             // 让下一个分区的标题和第一行海报顶部从底边露进来——既补回信息量，
             // 露出的半截图本身就是「还能往下滑」的暗示
@@ -529,7 +538,9 @@ public class UserFragment extends BaseLazyFragment {
                         ? R.drawable.dot_hero_selected : R.drawable.dot_hero_normal);
                 LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
                         selected ? ConvertUtils.dp2px(18f) : size, size);
-                lp.setMarginEnd(gap);
+                // 间距加在左侧：整排是 wrap_content 居中的，最后一段 marginEnd
+                // 会让胶囊往右多胖 5dp
+                if (i > 0) lp.setMarginStart(gap);
                 dots.addView(dot, lp);
             }
         }
@@ -567,19 +578,19 @@ public class UserFragment extends BaseLazyFragment {
         }
     }
 
+    /** 片名下面那行信息条：评分/更新状态 + 年份 + 地区 + 类型，订阅源缺哪个就少一段 */
     private static String heroSubtitle(Movie.Video vod) {
+        ArrayList<String> parts = new ArrayList<>(4);
+        // 占位评分（「0」「评分：0」）按无评分处理，规则和小封面徽章一致
         String note = vod.note == null ? "" : vod.note.trim();
         String num = note.replaceAll("[^0-9.]", "");
-        if (!num.isEmpty() && !num.equals("0") && !num.equals("0.0")) {
-            return note;
-        }
-        StringBuilder extra = new StringBuilder();
-        if (vod.year > 0) extra.append(vod.year);
-        if (!TextUtils.isEmpty(vod.area)) {
-            if (extra.length() > 0) extra.append(" · ");
-            extra.append(vod.area);
-        }
-        return extra.toString();
+        if (!num.isEmpty() && !num.equals("0") && !num.equals("0.0")) parts.add(note);
+        if (vod.year > 0) parts.add(String.valueOf(vod.year));
+        String area = vod.area == null ? "" : vod.area.trim();
+        if (!area.isEmpty()) parts.add(area);
+        String type = vod.type == null ? "" : vod.type.trim();
+        if (!type.isEmpty()) parts.add(type.split("[,，/|]")[0].trim());
+        return TextUtils.join(" · ", parts);
     }
 
     // ---------------- 外层列表适配器（hero + 分区标题 + 横滑行） ----------------

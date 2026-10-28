@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 首页 hero：通栏大图轮播，底部居中片名/评分 + 胶囊指示器。
+<!-- 首页 hero：通栏大图轮播，底边居中一栏文字（片名 / 元信息 / 指示器）。
      高度在 HeroVH 里按外层列表视口 * HERO_VIEWPORT_RATIO 动态设定，XML 里的 360dp
      只是预览占位。
 
-     底边两层：
-     - 压暗带（320dp，从底边最暗往上单调渐隐）垫住片名/评分/指示器，放在
-       HeroFadeLayout *里面*；
-     - HeroFadeLayout 再把底边 110dp 连图带暗带一起溶成透明，直接透出壁纸。
-     两层都得在：暗带单独用会在接缝处留下「黑带撞灰底」的硬边；溶层单独用，
-     海报自带的片名 logo 会糊在过渡区。暗带也不能做成两头渐隐、中间最深，
-     那等于在图片中间挂一条黑杠。
-     片名/指示器贴着交接处：下内边距 56dp，指示器落在被溶掉的那一段里，
-     片名主体在溶边之上、由暗带托住。 -->
+     底边只有一层：HeroFadeLayout 把底边 96dp 连图一起溶成透明，直接透出壁纸。
+     这里以前还压了一条 320dp 的暗带垫文字，但 hero 压到视口六成出头之后它仍盖住
+     大半张可见海报，整张图糊成一片灰黑；而它最暗的一档正好落在被溶掉的那一段里，
+     压了也白压。想留下暗带又不糊图，就得把它的最暗处顶到溶边上沿，那等于在图片
+     中间挂一条黑杠——所以暗带整条删掉。
+
+     文字压在雾化带上，背景可能是亮海报也可能是亮壁纸，两种主题都得看清：
+     字色和描影按主题成对翻转（@color/hero_caption_*），描影永远比字更亮或更暗，
+     相当于给字套一圈光环；指示器另外垫一条半透明胶囊，底色和点色成对翻转。 -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/heroRoot"
@@ -32,12 +32,6 @@
 
         <View
             android:layout_width="match_parent"
-            android:layout_height="320dp"
-            android:layout_gravity="bottom"
-            android:background="@drawable/bg_hero_scrim" />
-
-        <View
-            android:layout_width="match_parent"
             android:layout_height="160dp"
             android:layout_gravity="top"
             android:background="@drawable/bg_hero_top_scrim" />
@@ -49,50 +43,54 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
+        android:gravity="center_horizontal"
         android:orientation="vertical"
-        android:paddingHorizontal="24dp"
-        android:paddingBottom="56dp">
+        android:paddingHorizontal="16dp"
+        android:paddingBottom="2dp">
 
         <TextView
             android:id="@+id/heroTitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:ellipsize="end"
-            android:gravity="center_horizontal"
+            android:gravity="center"
             android:maxLines="1"
-            android:shadowColor="#99000000"
+            android:shadowColor="@color/hero_caption_shadow"
             android:shadowDx="0"
-            android:shadowDy="1"
-            android:shadowRadius="10"
-            android:textColor="@color/white"
+            android:shadowDy="3"
+            android:shadowRadius="20"
+            android:textColor="@color/hero_caption_title"
             android:textSize="24sp"
             android:textStyle="bold"
             tools:text="庆余年 第二季" />
 
         <TextView
             android:id="@+id/heroNote"
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
+            android:layout_marginTop="6dp"
             android:ellipsize="end"
-            android:gravity="center_horizontal"
             android:maxLines="1"
-            android:shadowColor="#80000000"
+            android:shadowColor="@color/hero_caption_shadow"
             android:shadowDx="0"
-            android:shadowDy="1"
-            android:shadowRadius="8"
-            android:textColor="#F2FFFFFF"
-            android:textSize="16sp"
-            tools:text="评分：8.6" />
+            android:shadowDy="2"
+            android:shadowRadius="16"
+            android:textColor="@color/hero_caption_note"
+            android:textSize="15sp"
+            tools:text="评分：8.6 · 2024 · 内地 · 古装" />
 
         <LinearLayout
             android:id="@+id/heroDots"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
             android:layout_marginTop="12dp"
+            android:background="@drawable/bg_hero_dots"
             android:gravity="center_vertical"
-            android:orientation="horizontal" />
+            android:orientation="horizontal"
+            android:paddingLeft="8dp"
+            android:paddingTop="5dp"
+            android:paddingRight="8dp"
+            android:paddingBottom="5dp" />
 
     </LinearLayout>
 

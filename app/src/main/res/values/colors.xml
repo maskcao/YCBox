@@ -127,8 +127,16 @@
     <color name="glass_stroke">#1F000000</color>
     <!-- 玻璃胶囊 8dp 抬起的投影色（NewBox 按 window_light_status_bar 取 10%/20% 黑） -->
     <color name="glass_shadow">#1A000000</color>
-    <!-- hero 底部渐变遮罩，保证标题在任何海报上都可读 -->
-    <color name="hero_scrim">#E6000000</color>
+    <!-- hero 的片名/评分压在底边那条雾化带上，带子的明暗跟着海报和主题一起变，
+         所以字色和描影按主题翻：浅色主题深字白影，深色主题反过来（见 values-night）。
+         描影比字更亮/更暗，等于给字垫一圈光环，遇到反差相反的海报也不至于糊掉 -->
+    <color name="hero_caption_title">#E6000000</color>
+    <color name="hero_caption_note">#C2000000</color>
+    <color name="hero_caption_shadow">#B3FFFFFF</color>
+    <!-- hero 指示器：胶囊和点成对翻转，保证点在胶囊上、胶囊在背景上都有反差 -->
+    <color name="hero_dot_pill">#66000000</color>
+    <color name="hero_dot_normal">#66FFFFFF</color>
+    <color name="hero_dot_selected">#FFFFFFFF</color>
     <!-- 标题栏同样半透明，让壁纸从标题栏透出来 -->
     <color name="title_bar_bg">#FFE3E3E3</color>
 

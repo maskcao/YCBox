@@ -5,11 +5,15 @@ android {
     compileSdkVersion 33
 
     defaultConfig {
-        applicationId 'com.github.tvbox.osc'
+        // 包名换成自己的：com.github.tvbox.osc 是 TVBox 系公共包名，别人手机上装的
+        // 同名 App（签名不同、versionCode 更高）会顶掉安装（-25 降级 / -7 签名不符）。
+        // 只改 applicationId，Java 包名和 AndroidManifest 的 package 保持不动，
+        // 所有 provider authority 走 ${applicationId}，会跟着一起改名，不会撞。
+        applicationId 'com.maskcao.ycbox'
         minSdkVersion 24
         targetSdkVersion 30
-        versionCode 20101
-        versionName '2.1.1'
+        versionCode 20102
+        versionName '2.1.2'
         multiDexEnabled true
         //设置room的Schema的位置
         javaCompileOptions {

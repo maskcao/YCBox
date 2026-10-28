@@ -45,6 +45,11 @@
     <color name="glass_fill_static">#CC1A1A20</color>
     <color name="glass_stroke">#24FFFFFF</color>
     <color name="glass_shadow">#33000000</color>
-    <color name="hero_scrim">#E6000000</color>
+    <color name="hero_caption_title">#FFFFFFFF</color>
+    <color name="hero_caption_note">#F2FFFFFF</color>
+    <color name="hero_caption_shadow">#CC000000</color>
+    <color name="hero_dot_pill">#B3FFFFFF</color>
+    <color name="hero_dot_normal">#66000000</color>
+    <color name="hero_dot_selected">#E6000000</color>
     <color name="title_bar_bg">#FF292929</color>
 </resources>
