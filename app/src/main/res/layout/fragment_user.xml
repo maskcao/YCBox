@@ -1,19 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<!-- 主页 tab：下拉刷新 + 分区列表（hero 轮播 + 各分区横滑行）。
+     底部 padding 给悬浮 dock 让位，横向 padding 交给各分区自己控制（hero 要通栏）。 -->
+<androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/swipeRefresh"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:orientation="vertical">
+    android:layout_height="match_parent">
 
-    <!-- 主页分区列表：站点推荐 / 热门电视剧 / 豆瓣热门 / 高分电影 / 综艺热播，
-         每个分区 = 标题 + 两行横滑海报；底部 padding 给悬浮 dock 让位 -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/tvHotList1"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:clipToPadding="false"
-        android:paddingHorizontal="10dp"
-        android:paddingBottom="96dp"
-        />
+        android:overScrollMode="never"
+        android:paddingBottom="96dp" />
 
-</RelativeLayout>
+</androidx.swiperefreshlayout.widget.SwipeRefreshLayout>

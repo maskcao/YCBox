@@ -26,6 +26,27 @@ public final class ThumbLoader {
     private ThumbLoader() {
     }
 
+    /**
+     * 通栏大图专用：先把爬虫给的缩略图档位换成原图档，再走统一加载。
+     *
+     * <p>豆瓣的 s_ratio_poster 只有 270x405，铺满 1080x2400 的 hero 要放大 4 倍，
+     * 同一路径的 l_ratio_poster 是 1080x1620；TMDB 的 w500 同理换 original。
+     * 只给 hero 用是因为流量差 9 倍，网格小卡换档不划算。
+     */
+    public static void loadLarge(ImageView iv, String url) {
+        load(iv, enlargePicUrl(url));
+    }
+
+    private static String enlargePicUrl(String url) {
+        if (TextUtils.isEmpty(url) || url.startsWith("data:")) {
+            return url;
+        }
+        return url.replace("/s_ratio_poster/", "/l_ratio_poster/")
+                .replace("/view/photo/s/", "/view/photo/l/")
+                .replace("/view/photo/m/", "/view/photo/l/")
+                .replaceAll("/t/p/w\\d+/", "/t/p/original/");
+    }
+
     public static void load(ImageView iv, String url) {
         load(iv, url, R.drawable.img_loading_placeholder);
     }

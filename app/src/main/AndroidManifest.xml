@@ -88,6 +88,10 @@
         <activity
             android:name=".ui.activity.CollectActivity"
             android:configChanges="orientation|screenSize|keyboardHidden"/>
+        <activity
+            android:name=".ui.activity.SectionAllActivity"
+            android:configChanges="orientation|screenSize|keyboardHidden"
+            android:exported="false" />
 
         <service android:name="com.android.cast.dlna.dmc.DLNACastService"/>
 

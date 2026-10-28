@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 标记「这个 view 自己就是一块玻璃」，玻璃捕获底图时互相跳过，避免把彼此的像素糊进去 -->
+    <item name="tag_glass_backdrop" type="id" />
+</resources>

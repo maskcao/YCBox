@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 首页分区横滑行：两行海报、横向滚动 -->
+<!-- 首页分区横滑行：单行 NewBox 海报卡，行高 = 卡片 150dp + 标题区 -->
 <com.owen.tvrecyclerview.widget.TvRecyclerView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="182dp" />
+    android:layout_height="176dp"
+    android:clipToPadding="false"
+    android:overScrollMode="never"
+    android:paddingStart="16dp"
+    android:paddingEnd="9dp" />

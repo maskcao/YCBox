@@ -14,8 +14,8 @@
 
     <ImageView
         android:id="@+id/dock_icon"
-        android:layout_width="26dp"
-        android:layout_height="26dp"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
         android:background="@drawable/bg_dock_tile_selector"
         android:scaleType="fitCenter"
         app:tint="@color/dock_icon_tint" />
@@ -26,5 +26,5 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="1dp"
         android:textColor="@color/dock_label_color"
-        android:textSize="12sp"/>
+        android:textSize="11sp"/>
 </LinearLayout>

@@ -1,14 +1,41 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 首页分区标题（站点推荐 / 热门电视剧 / 豆瓣热门 ...） -->
-<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+<!-- 首页分区标题（参考 NewBox）：左侧片名，右侧「全部」玻璃胶囊 -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/tvSectionTitle"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:paddingStart="4dp"
-    android:paddingTop="14dp"
-    android:paddingBottom="8dp"
-    android:textColor="@color/text_foreground"
-    android:textSize="16sp"
-    android:textStyle="bold"
-    tools:text="站点推荐" />
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:paddingHorizontal="16dp"
+    android:paddingTop="18dp"
+    android:paddingBottom="8dp">
+
+    <TextView
+        android:id="@+id/tvSectionTitle"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:textColor="@color/text_foreground"
+        android:textSize="15sp"
+        android:textStyle="bold"
+        tools:text="热门电视剧" />
+
+    <TextView
+        android:id="@+id/tvSectionAll"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@drawable/bg_glass_capsule"
+        android:clickable="true"
+        android:focusable="true"
+        android:gravity="center"
+        android:minWidth="48dp"
+        android:paddingHorizontal="12dp"
+        android:paddingVertical="2dp"
+        android:text="全部"
+        android:textColor="@color/text_foreground"
+        android:textSize="13sp"
+        android:textStyle="bold" />
+
+</LinearLayout>

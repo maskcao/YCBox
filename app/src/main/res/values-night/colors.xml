@@ -14,6 +14,8 @@
     <color name="red">#FFE85454</color>
     <color name="disable_text">#FF606068</color>
     <color name="bg_popup">#FF1C1C22</color>
+    <color name="toast_bg">#F032323A</color>
+    <color name="toast_fg">#FFF2F2F5</color>
     <color name="bg_page">#FF080808</color>
     <color name="disable_gray">#FF505058</color>
     <color name="orange">#FFFF6D3B</color>
@@ -33,6 +35,16 @@
     <color name="stroke_subtle">#24FFFFFF</color>
     <!-- 夜间：遮罩与导航栏用半透明黑，避免壁纸太亮影响文字 -->
     <color name="wallpaper_scrim">#B3000000</color>
-    <color name="dock_bg">#00000000</color>
+    <!-- 底部悬浮 dock 的兜底色（无壁纸时使用）；有壁纸时由代码取壁纸底部均值色覆盖 -->
+    <color name="dock_bg">#FF292929</color>
+    <!-- 夜间磨砂玻璃：40% 深墨雾面 + 24% 白描边。糊底已能隐约透出轮廓，
+         雾面只负责把透出的内容往「墨玻璃」的观感上拉，再厚就盖回纯色了 -->
+    <color name="dock_glass_fill">#661A1A20</color>
+    <color name="dock_glass_stroke">#24FFFFFF</color>
+    <color name="glass_fill">#661A1A20</color>
+    <color name="glass_fill_static">#CC1A1A20</color>
+    <color name="glass_stroke">#24FFFFFF</color>
+    <color name="glass_shadow">#33000000</color>
+    <color name="hero_scrim">#E6000000</color>
     <color name="title_bar_bg">#FF292929</color>
 </resources>

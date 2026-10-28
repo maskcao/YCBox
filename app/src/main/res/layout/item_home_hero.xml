@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- NewBox 首页 hero：整屏通栏大图轮播，底部居中片名/评分 + 胶囊指示器。
+     高度在 HeroVH 里按外层列表视口动态设定，XML 里的 360dp 只是预览占位。 -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/heroRoot"
+    android:layout_width="match_parent"
+    android:layout_height="360dp"
+    android:descendantFocusability="blocksDescendants"
+    android:focusable="false"
+    android:clipChildren="true">
+
+    <androidx.viewpager2.widget.ViewPager2
+        android:id="@+id/heroPager"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="200dp"
+        android:layout_gravity="top"
+        android:background="@drawable/bg_hero_top_scrim" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="400dp"
+        android:layout_gravity="bottom"
+        android:background="@drawable/bg_hero_scrim" />
+
+    <LinearLayout
+        android:id="@+id/heroCaption"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:orientation="vertical"
+        android:paddingHorizontal="24dp"
+        android:paddingBottom="96dp">
+
+        <TextView
+            android:id="@+id/heroTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:gravity="center_horizontal"
+            android:maxLines="1"
+            android:shadowColor="#99000000"
+            android:shadowDx="0"
+            android:shadowDy="1"
+            android:shadowRadius="10"
+            android:textColor="@color/white"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            tools:text="庆余年 第二季" />
+
+        <TextView
+            android:id="@+id/heroNote"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:ellipsize="end"
+            android:gravity="center_horizontal"
+            android:maxLines="1"
+            android:shadowColor="#80000000"
+            android:shadowDx="0"
+            android:shadowDy="1"
+            android:shadowRadius="8"
+            android:textColor="#F2FFFFFF"
+            android:textSize="16sp"
+            tools:text="评分：8.6" />
+
+        <LinearLayout
+            android:id="@+id/heroDots"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="12dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal" />
+
+    </LinearLayout>
+
+</FrameLayout>

@@ -1,28 +1,16 @@
 package com.github.tvbox.osc.ui.adapter;
 
 import android.annotation.SuppressLint;
-import android.graphics.Color;
 import android.graphics.drawable.Drawable;
-import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
-import android.widget.TextView;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.ListAdapter;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.blankj.utilcode.util.ColorUtils;
-import com.bumptech.glide.Glide;
-import com.bumptech.glide.load.DataSource;
-import com.bumptech.glide.load.engine.DiskCacheStrategy;
-import com.bumptech.glide.load.engine.GlideException;
-import com.bumptech.glide.request.RequestListener;
-import com.bumptech.glide.request.target.Target;
 import com.github.tvbox.osc.R;
 import com.google.android.material.checkbox.MaterialCheckBox;
 
@@ -82,9 +70,16 @@ public class SelectDialogAdapter<T> extends ListAdapter<T, SelectDialogAdapter.S
 
     private SelectDialogInterface dialogInterface;
 
+    private boolean mBorderMode;
+
     public SelectDialogAdapter(SelectDialogInterface dialogInterface, DiffUtil.ItemCallback diffCallback) {
         super(diffCallback);
         this.dialogInterface = dialogInterface;
+    }
+
+    /** 选中态改用条目描边表示，不画对勾圆圈（底部面板的双列卡片里圆圈太占位）。 */
+    public void setBorderMode(boolean borderMode) {
+        mBorderMode = borderMode;
     }
 
     public void setData(List<T> newData, int defaultSelect) {
@@ -100,6 +95,8 @@ public class SelectDialogAdapter<T> extends ListAdapter<T, SelectDialogAdapter.S
     }
 
 
+    @NonNull
+    @NotNull
     @Override
     public SelectDialogAdapter.SelectViewHolder onCreateViewHolder(@NonNull @NotNull ViewGroup parent, int viewType) {
         return new SelectDialogAdapter.SelectViewHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.item_dialog_select, parent, false));
@@ -109,12 +106,22 @@ public class SelectDialogAdapter<T> extends ListAdapter<T, SelectDialogAdapter.S
     public void onBindViewHolder(@NonNull @NotNull SelectDialogAdapter.SelectViewHolder holder, @SuppressLint("RecyclerView") int position) {
         T value = data.get(position);
         MaterialCheckBox view = holder.itemView.findViewById(R.id.tvName);
-        view.setChecked(position == select);
+        boolean picked = position == select;
+        if (mBorderMode) {
+            view.setButtonDrawable((Drawable) null);
+            holder.itemView.setBackgroundResource(R.drawable.bg_pick_item);
+            holder.itemView.setSelected(picked);
+        } else {
+            view.setChecked(picked);
+        }
         view.setText(dialogInterface.getDisplay(value));
         holder.itemView.setOnClickListener(v -> {
             if (position == select)
                 return;
-            notifyItemChanged(select);
+            // select 为 -1 表示当前没有选中项（例如生效的配置不在订阅列表里），
+            // 此时没有旧条目需要刷新，直接把它挪到新点的这一项即可
+            if (select >= 0)
+                notifyItemChanged(select);
             select = position;
             notifyItemChanged(select);
             dialogInterface.click(value, position);

@@ -6,6 +6,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:orientation="vertical">
 
+    <!-- 顶栏改成浮层后，分类页自己留出等高的顶部留白（114dp 顶栏 + 8dp 间距），
+         clipToPadding=false 让列表滚动时仍能从顶栏底下穿过。 -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/mGridView"
         android:layout_width="match_parent"
@@ -14,7 +16,10 @@
         tools:listitem="@layout/item_grid"
         tools:layoutManager="androidx.recyclerview.widget.GridLayoutManager"
         tools:spanCount="3"
-        android:paddingHorizontal="10dp"/>
+        android:clipToPadding="false"
+        android:paddingHorizontal="10dp"
+        android:paddingTop="122dp"
+        android:paddingBottom="96dp"/>
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/btn_filter"
@@ -23,6 +28,7 @@
         android:layout_alignParentEnd="true"
         android:layout_alignParentBottom="true"
         android:layout_margin="20dp"
+        android:layout_marginBottom="96dp"
         android:backgroundTint="@color/colorPrimary"
         app:borderWidth="0dp"
         android:src="@drawable/ic_filter_list"

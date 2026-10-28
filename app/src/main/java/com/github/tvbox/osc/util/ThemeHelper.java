@@ -92,13 +92,25 @@ public class ThemeHelper {
      */
     public static void apply(Activity activity, int tag) {
         Hawk.put(HawkConfig.THEME_TAG, tag);
-        AppCompatDelegate.setDefaultNightMode(
-                tag == 2 ? AppCompatDelegate.MODE_NIGHT_YES
-                        : tag == 1 ? AppCompatDelegate.MODE_NIGHT_NO
-                        : AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM);
         if (activity == null) {
+            AppCompatDelegate.setDefaultNightMode(toNightMode(tag));
             return;
         }
+        // 把调用方 Activity 固定在自己当前的明暗配置上。
+        //
+        // setDefaultNightMode 会让 appcompat 对**所有**存活的 Activity 调 applyDayNight，
+        // 其中就包括马上要 finish 的调用方：它会额外 recreate 一次。
+        // 而下面又要新建一个 MainActivity，于是同一次切换会多出一个实例——
+        // 新实例显示期间，旧主题的窗口/dock 还在同一任务里，看起来就是 dock 闪一下或叠影。
+        // 设成本身已有的模式后 applyDayNight 发现配置没变，就不会 recreate。
+        if (activity instanceof androidx.appcompat.app.AppCompatActivity) {
+            boolean dark = (activity.getResources().getConfiguration().uiMode
+                    & Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES;
+            ((androidx.appcompat.app.AppCompatActivity) activity).getDelegate()
+                    .setLocalNightMode(dark ? AppCompatDelegate.MODE_NIGHT_YES
+                            : AppCompatDelegate.MODE_NIGHT_NO);
+        }
+        AppCompatDelegate.setDefaultNightMode(toNightMode(tag));
         // 用「启动新 MainActivity + finish 旧实例」替换当前界面，而不是 recreate()。
         //
         // recreate() 虽然能让新 Activity 拿到正确配置，但旧 Activity 的窗口内容会
@@ -122,5 +134,11 @@ public class ThemeHelper {
             } catch (Exception ignored) {
             }
         }, 60);
+    }
+
+    private static int toNightMode(int tag) {
+        return tag == 2 ? AppCompatDelegate.MODE_NIGHT_YES
+                : tag == 1 ? AppCompatDelegate.MODE_NIGHT_NO
+                : AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM;
     }
 }

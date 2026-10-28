@@ -2,14 +2,20 @@ package com.github.tvbox.osc.ui.activity
 
 import android.os.Process
 import android.view.MenuItem
+import android.view.MotionEvent
 import android.view.View
-import android.view.ViewGroup
+import android.view.ViewConfiguration
+import android.view.animation.PathInterpolator
+import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentPagerAdapter
 import androidx.viewpager.widget.ViewPager.SimpleOnPageChangeListener
 import com.blankj.utilcode.util.ActivityUtils
+import com.blankj.utilcode.util.ConvertUtils
 import com.blankj.utilcode.util.ToastUtils
 import com.github.tvbox.osc.R
 import com.github.tvbox.osc.base.BaseVbActivity
@@ -35,12 +41,14 @@ class MainActivity : BaseVbActivity<ActivityMainBinding>() {
     var useCacheConfig = false
     private var exitTime = 0L
 
+    /** 首页铺满整屏：内容绘制到状态栏/手势条后面，dock 作为悬浮层盖在内容上 */
+    override fun isEdgeToEdge(): Boolean = true
+
     override fun init() {
 
         useCacheConfig = intent.extras?.getBoolean(IntentKey.CACHE_CONFIG_CHANGED, false)?:false
 
         buildPages()
-
         mBinding.vp.adapter = object : FragmentPagerAdapter(supportFragmentManager) {
             override fun getItem(position: Int): Fragment {
                 return fragments[position]
@@ -58,6 +66,7 @@ class MainActivity : BaseVbActivity<ActivityMainBinding>() {
         mBinding.vp.offscreenPageLimit = (fragments.size - 1).coerceAtLeast(1)
 
         buildDock()
+        applyDockWindowInsets()
 
         // 主题切换会重启应用，这里恢复到「我的」页，便于用户确认结果
         if (Hawk.get(HawkConfig.THEME_RELAUNCH_TO_MY, false)) {
@@ -70,6 +79,9 @@ class MainActivity : BaseVbActivity<ActivityMainBinding>() {
                 // 按 ViewPager 页位反查 dock 条目，直播项不在 ViewPager 中，
                 // 不能用 getItem(position)（条目数与页位数不对齐）
                 pageMenuIds.getOrNull(position)?.let { selectDock(it) }
+                showDock(false)
+                // 新页的列表内容是异步填充的，补一次重录（下一帧生效，不再是定时器）
+                mBinding.vp.postDelayed({ mBinding.dockBar.refreshBackdrop() }, 260)
             }
         })
     }
@@ -86,6 +98,159 @@ class MainActivity : BaseVbActivity<ActivityMainBinding>() {
 
     /** 上次构建 dock 时的显隐配置签名；配置未变就不重建 */
     private var dockConfigSig: String? = null
+
+    /** dock 是否已收起：手指上滑收起，下滑弹出（见 handleDockGesture） */
+    private var dockHidden = false
+
+    /** 收起：逐渐下移、消失于底部；时长略放宽，弱机上被卡顿时仍能看出位移过程 */
+    private val dockEasing = PathInterpolator(0.4f, 0f, 0.2f, 1f)
+    private val dockTouchSlop by lazy { ViewConfiguration.get(this).scaledTouchSlop }
+    /** 手指竖向累计位移超过 32dp 才切换显隐，避免轻点或抖动误触 */
+    private val dockHideThreshold by lazy { ConvertUtils.dp2px(32f).toFloat() }
+    private val dockLocation = IntArray(2)
+    private var dockPointerId = -1
+    private var dockDownX = 0f
+    private var dockDownY = 0f
+    private var dockLastY = 0f
+    private var dockDragSum = 0f
+    private var dockDragging = false
+    private var dockTrackTouch = false
+
+    /**
+     * dock 悬浮在内容之上：底部只让出手势条高度 + 12dp 间距。
+     * 父布局不做系统栏 padding（见 BaseActivity.isEdgeToEdge），避让全靠这里。
+     */
+    private fun applyDockWindowInsets() {
+        ViewCompat.setOnApplyWindowInsetsListener(mBinding.dockBar) { v, insets ->
+            val navInset = insets.getInsets(WindowInsetsCompat.Type.navigationBars()).bottom
+            val lp = v.layoutParams as FrameLayout.LayoutParams
+            val bottom = navInset + ConvertUtils.dp2px(12f)
+            if (lp.bottomMargin != bottom) {
+                lp.bottomMargin = bottom
+                v.layoutParams = lp
+            }
+            insets
+        }
+        ViewCompat.requestApplyInsets(mBinding.dockBar)
+    }
+
+    /**
+     * 与 NewBox 相同的显隐触发方式：在 Activity 层跟踪竖向手势。
+     *
+     * <p>手指累计上滑 32dp 收起 dock，累计下滑 32dp 弹出；横向滑动（切换
+     * ViewPager）和从 dock 上开始的触摸不参与，避免误触。
+     */
+    override fun dispatchTouchEvent(ev: MotionEvent): Boolean {
+        handleDockGesture(ev)
+        return super.dispatchTouchEvent(ev)
+    }
+
+    private fun handleDockGesture(ev: MotionEvent) {
+        when (ev.actionMasked) {
+            MotionEvent.ACTION_DOWN -> {
+                dockPointerId = ev.getPointerId(0)
+                dockDownX = ev.x
+                dockDownY = ev.y
+                dockLastY = ev.y
+                dockDragSum = 0f
+                dockDragging = false
+                // 收起状态下滑动一定是在唤出；展开时手指落在 dock 上则不算
+                dockTrackTouch = dockHidden || !isInsideDock(ev.x, ev.y)
+            }
+
+            MotionEvent.ACTION_MOVE -> {
+                if (!dockTrackTouch) return
+                val index = ev.findPointerIndex(dockPointerId)
+                if (index < 0) return
+                val x = ev.getX(index)
+                val y = ev.getY(index)
+                if (!dockDragging) {
+                    val dx = kotlin.math.abs(x - dockDownX)
+                    val dy = kotlin.math.abs(y - dockDownY)
+                    if (dx < dockTouchSlop && dy < dockTouchSlop) return
+                    dockDragging = true
+                    if (dx > dy) {
+                        // 横向是切页手势，交给 ViewPager
+                        dockTrackTouch = false
+                        return
+                    }
+                }
+                val dy = y - dockLastY
+                dockLastY = y
+                if (dy == 0f) return
+                // 反向滑动时重新累计，不把来回抖动算在一起
+                if (dockDragSum != 0f && (dy > 0f) != (dockDragSum > 0f)) {
+                    dockDragSum = 0f
+                }
+                dockDragSum += dy
+                when {
+                    dockDragSum <= -dockHideThreshold -> {
+                        hideDock()
+                        dockDragSum = 0f
+                    }
+                    dockDragSum >= dockHideThreshold -> {
+                        showDock()
+                        dockDragSum = 0f
+                    }
+                }
+            }
+
+            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> dockTrackTouch = false
+
+            MotionEvent.ACTION_POINTER_UP ->
+                if (ev.getPointerId(ev.actionIndex) == dockPointerId) dockTrackTouch = false
+        }
+    }
+
+    private fun isInsideDock(x: Float, y: Float): Boolean {
+        val bar = mBinding.dockBar
+        if (bar.width == 0 || bar.height == 0) return false
+        bar.getLocationInWindow(dockLocation)
+        return x >= dockLocation[0] && x <= dockLocation[0] + bar.width &&
+                y >= dockLocation[1] && y <= dockLocation[1] + bar.height
+    }
+
+    /** 上滑收起：整条 dock 向下平移自身高度 + 底部间距，滑出屏幕 */
+    private fun hideDock() {
+        val bar = mBinding.dockBar
+        if (dockHidden || !bar.isLaidOut) return
+        dockHidden = true
+        bar.animate().cancel()
+        bar.animate()
+            .translationY(dockHideOffset())
+            .setDuration(260L)
+            .setInterpolator(dockEasing)
+            .start()
+    }
+
+    /** 下滑弹出；换页时也用它把 dock 复位 */
+    private fun showDock(animate: Boolean = true) {
+        val bar = mBinding.dockBar
+        val atRest = !dockHidden && bar.translationY == 0f
+        dockHidden = false
+        if (atRest) return
+        bar.animate().cancel()
+        if (animate) {
+            bar.animate()
+                .translationY(0f)
+                .setDuration(300L)
+                .setInterpolator(dockEasing)
+                .withEndAction { bar.refreshBackdrop(0) }
+                .start()
+        } else {
+            bar.translationY = 0f
+            bar.refreshBackdrop(40)
+        }
+    }
+
+    /** 收起的位移 = 底部间距（手势条 inset + 12dp）+ dock 自身高度，与 NewBox 一致 */
+    private fun dockHideOffset(): Float {
+        val bar = mBinding.dockBar
+        val gap = (bar.layoutParams as? FrameLayout.LayoutParams)?.bottomMargin
+            ?: ConvertUtils.dp2px(12f)
+        val height = if (bar.height > 0) bar.height else ConvertUtils.dp2px(56f)
+        return (gap + height).toFloat()
+    }
 
     /** 依据设置里的显隐开关构建自绘 dock（首页/我的固定显示） */
     private fun buildDock() {
@@ -193,6 +358,8 @@ class MainActivity : BaseVbActivity<ActivityMainBinding>() {
     override fun onResume() {
         super.onResume()
         buildDock()
+        showDock(false)
+        mBinding.dockBar.refreshBackdrop(200)
     }
 
     /** 壁纸被换掉/删除时由「我的」页发事件过来，立刻刷新全局背景 */
@@ -200,6 +367,9 @@ class MainActivity : BaseVbActivity<ActivityMainBinding>() {
     fun onWallpaperChanged(event: RefreshEvent) {
         if (event.type == RefreshEvent.TYPE_WALLPAPER) {
             refreshWallpaper()
+            // 壁纸图是异步解码的，隔一会儿再取一次玻璃底图
+            mBinding.dockBar.refreshBackdrop(300)
+            mBinding.dockBar.refreshBackdrop(1200)
         }
     }
 

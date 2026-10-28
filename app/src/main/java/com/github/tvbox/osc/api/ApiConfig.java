@@ -61,6 +61,8 @@ public class ApiConfig {
     private SourceBean mHomeSource;
     private ParseBean mDefaultParse;
     private List<LiveChannelGroup> liveChannelGroupList;
+    /** 本次配置解析出的直播是「一条待拉取的地址」，而不是配置里写死的频道组，见 {@link #syncLiveUrl()} */
+    private boolean liveUrlMode = false;
     private List<ParseBean> parseBeanList;
     private List<String> vipParseFlags;
     private List<IJKCode> ijkCodes;
@@ -504,6 +506,7 @@ public class ApiConfig {
         }
         // 直播源
         liveChannelGroupList.clear();           //修复从后台切换重复加载频道列表
+        liveUrlMode = false;
         String liveURL = Hawk.get(HawkConfig.LIVE_URL, "");
         //String epgURL  = Hawk.get(HawkConfig.EPG_URL, "");
 
@@ -548,6 +551,7 @@ public class ApiConfig {
 
                         // Final Live URL
                         liveURL_final = extUrlFix;
+                        liveUrlMode = true;
 
 //                    // Encoding the Live URL
 //                    extUrlFix = Base64.encodeToString(extUrlFix.getBytes("UTF-8"), Base64.DEFAULT | Base64.URL_SAFE | Base64.NO_WRAP);
@@ -607,6 +611,7 @@ public class ApiConfig {
 
                                 // Final Live URL
                                 liveURL_final = url;
+                                liveUrlMode = true;
 
 //                            url = Base64.encodeToString(url.getBytes("UTF-8"), Base64.DEFAULT | Base64.URL_SAFE | Base64.NO_WRAP);
                             }
@@ -883,6 +888,38 @@ public class ApiConfig {
 
     public List<LiveChannelGroup> getChannelGroupList() {
         return liveChannelGroupList;
+    }
+
+    /**
+     * 单独换直播源后，重建 {@link #parseJson} 留下的那条 live 快照。
+     *
+     * <p>parseJson 把当时的 LIVE_URL base64 进
+     * `http://127.0.0.1:9978/proxy?do=live&type=txt&ext=...` 存进 liveChannelGroupList，
+     * LiveActivity 每次开播从这条地址里解出真正的源地址 —— 只改 Hawk 里的 LIVE_URL
+     * 下一次开播还是旧源，而整页重载代价太大。
+     *
+     * <p>必须整条换掉、不能只改 ext：LiveActivity 拉到频道后会调 {@link #loadLives}
+     * 把这条快照换成真正的频道组塞回列表，所以看过一次直播之后列表里已经没有快照可改了
+     * （订阅管理页靠重启 MainActivity 重新解析配置绕开这点，这里做轻量版）。
+     *
+     * <p>配置自带内联频道组（{@code liveUrlMode} 为 false）时原样返回：那种形态本来就不看
+     * LIVE_URL，就算重载配置也一样，不必在这里改变行为。
+     */
+    public void syncLiveUrl() {
+        try {
+            String liveURL = Hawk.get(HawkConfig.LIVE_URL, "");
+            if (StringUtils.isBlank(liveURL) || !liveUrlMode) {
+                return;
+            }
+            String ext = Base64.encodeToString(liveURL.getBytes("UTF-8"),
+                    Base64.DEFAULT | Base64.URL_SAFE | Base64.NO_WRAP);
+            LiveChannelGroup group = new LiveChannelGroup();
+            group.setGroupName("http://127.0.0.1:9978/proxy?do=live&type=txt&ext=" + ext);
+            liveChannelGroupList.clear();
+            liveChannelGroupList.add(group);
+        } catch (Throwable th) {
+            th.printStackTrace();
+        }
     }
 
     /**

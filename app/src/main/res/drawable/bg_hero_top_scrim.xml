@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- hero 顶部压暗：图片顶到状态栏后，顶栏玻璃胶囊和状态栏图标需要一个暗底才读得清 -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <gradient
+        android:angle="270"
+        android:centerColor="#33000000"
+        android:endColor="#00000000"
+        android:startColor="#99000000" />
+</shape>

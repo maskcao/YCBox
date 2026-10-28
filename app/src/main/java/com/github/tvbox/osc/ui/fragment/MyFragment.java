@@ -88,8 +88,10 @@ public class MyFragment extends BaseVbFragment<FragmentMyBinding> {
         initThemeEntry();
 
         mBinding.addrPlay.setOnClickListener(v ->{
+            CharSequence clip = ClipboardUtils.getText();
+            String clipText = clip == null ? "" : clip.toString();
             new XPopup.Builder(getContext())
-                    .asInputConfirm("播放", "", isPush(ClipboardUtils.getText().toString())?ClipboardUtils.getText():"", "地址", text -> {
+                    .asInputConfirm("播放", "", isPush(clipText)?clipText:"", "地址", text -> {
                         if (!TextUtils.isEmpty(text)){
                             Intent newIntent = new Intent(mContext, DetailActivity.class);
                             newIntent.putExtra("id", text);

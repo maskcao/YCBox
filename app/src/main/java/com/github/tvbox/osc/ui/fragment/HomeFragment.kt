@@ -32,6 +32,7 @@ import com.github.tvbox.osc.base.BaseLazyFragment
 import com.github.tvbox.osc.base.BaseVbFragment
 import com.github.tvbox.osc.bean.AbsSortXml
 import com.github.tvbox.osc.bean.MovieSort.SortData
+import com.github.tvbox.osc.bean.Subscription
 import com.github.tvbox.osc.bean.SourceBean
 import com.github.tvbox.osc.bean.VodInfo
 import com.github.tvbox.osc.cache.RoomDataManger
@@ -43,19 +44,20 @@ import com.github.tvbox.osc.ui.activity.FastSearchActivity
 import com.github.tvbox.osc.ui.activity.HistoryActivity
 import com.github.tvbox.osc.ui.activity.MainActivity
 import com.github.tvbox.osc.ui.activity.SubscriptionActivity
-import com.github.tvbox.osc.util.StringUtils
 import com.github.tvbox.osc.ui.adapter.SelectDialogAdapter.SelectDialogInterface
 import com.github.tvbox.osc.ui.dialog.LastViewedDialog
-import com.github.tvbox.osc.ui.dialog.SelectDialog
+import com.github.tvbox.osc.ui.dialog.BottomPickDialog
+import com.github.tvbox.osc.ui.dialog.SubscriptionPickDialog
 import com.github.tvbox.osc.ui.dialog.TipDialog
+import com.github.tvbox.osc.ui.widget.GlassBackdrop
+import com.github.tvbox.osc.util.BuiltinConfig
 import com.github.tvbox.osc.util.DefaultConfig
 import com.github.tvbox.osc.util.HawkConfig
 import com.github.tvbox.osc.util.HomeCache
+import com.github.tvbox.osc.util.LiveSubscriptionStore
 import com.github.tvbox.osc.viewmodel.SourceViewModel
 import com.lxj.xpopup.XPopup
 import com.orhanobut.hawk.Hawk
-import com.owen.tvrecyclerview.widget.TvRecyclerView
-import com.owen.tvrecyclerview.widget.V7GridLayoutManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -95,6 +97,9 @@ class HomeFragment : BaseVbFragment<FragmentHomeBinding>() {
 
     override fun init() {
         ControlManager.get().startServer()
+        mBinding.subContainer.setOnClickListener {
+            showSubscriptionSwitch()
+        }
         mBinding.nameContainer.setOnClickListener {
             if (dataInitOk && jarInitOk) {
                 showSiteSwitch()
@@ -109,6 +114,11 @@ class HomeFragment : BaseVbFragment<FragmentHomeBinding>() {
         mBinding.search.setOnClickListener {
             jumpActivity(FastSearchActivity::class.java)
         }
+        // 四枚顶栏胶囊换成实时磨砂（NewBox 的 GlassCapsule 每枚都自己模糊背后内容）
+        GlassBackdrop.installCapsule(mBinding.subContainer, 16f)
+        GlassBackdrop.installCapsule(mBinding.nameContainer, 16f)
+        GlassBackdrop.installCapsule(mBinding.search, 16f)
+        GlassBackdrop.installCapsule(mBinding.tabGlassBar, 16f)
         setLoadSir(mBinding.contentLayout)
         initViewModel()
         // 主题切换会重建界面并停在「我的」页，此时首页不可见：
@@ -142,14 +152,23 @@ class HomeFragment : BaseVbFragment<FragmentHomeBinding>() {
     private fun initViewModel() {
         sourceViewModel = ViewModelProvider(this).get(SourceViewModel::class.java)
         sourceViewModel?.sortResult?.observe(this) { absXml: AbsSortXml? ->
-            showSuccess()
             // 写入内存缓存，供主题切换重建后立即渲染
             HomeCache.setSource(ApiConfig.get().homeSourceBean.key)
-            if (absXml != null) {
-                HomeCache.putSort(absXml)
+            if (absXml == null) {
+                // 网络失败时 sortResult 推 null。已经渲染过分类就保持现状：
+                // 否则 tab 栏会被重置成只剩「主页」，缓存的推荐位也一起丢掉。
+                if (mSortDataList.isEmpty()) {
+                    mSortDataList = DefaultConfig.adjustSort(ApiConfig.get().homeSourceBean.key, ArrayList(), true)
+                    initViewPager(null)
+                }
+                showSuccess()
+                retrySort()
+                return@observe
             }
+            mSortRetries = 0
+            HomeCache.putSort(absXml)
             mSortDataList =
-                if (absXml?.classes != null && absXml.classes.sortList != null) {
+                if (absXml.classes != null && absXml.classes.sortList != null) {
                     DefaultConfig.adjustSort(
                         ApiConfig.get().homeSourceBean.key,
                         absXml.classes.sortList,
@@ -159,7 +178,20 @@ class HomeFragment : BaseVbFragment<FragmentHomeBinding>() {
                     DefaultConfig.adjustSort(ApiConfig.get().homeSourceBean.key, ArrayList(), true)
                 }
             initViewPager(absXml)
+            showSuccess()
         }
+    }
+
+    /** 分类拉取失败次数 / 上限：网络抖动后自动再拉，恢复后 tab 栏能自己长回来 */
+    private var mSortRetries = 0
+
+    private fun retrySort() {
+        if (mSortRetries >= 2) return
+        val delay = 3000L * (mSortRetries + 1)
+        mSortRetries++
+        mBinding.root.postDelayed({
+            if (isAdded) sourceViewModel?.getSort(ApiConfig.get().homeSourceBean.key)
+        }, delay)
     }
 
     private fun initData() {
@@ -168,12 +200,13 @@ class HomeFragment : BaseVbFragment<FragmentHomeBinding>() {
 
         val home = ApiConfig.get().homeSourceBean
         if (home != null && !home.name.isNullOrEmpty()) {
-            // 源配置的 name 常带 emoji 装饰（如 "🐮【免费分享】🐮"）。彩色 emoji 是位图字体，
-            // 16sp 下渲染发虚；卡通风格也与扁平化顶栏冲突。展示层统一剥离，配置本身不动。
-            mBinding.tvName.text = StringUtils.stripEmoji(home.name)
+            // 顶栏原样显示配置里的源名，和切源面板里那一条逐字对得上。
+            // （之前会剥掉两头的 🐮 装饰，看着像少了一段。）
+            mBinding.tvName.text = home.name
             mBinding.tvName.postDelayed({ mBinding.tvName.isSelected = true }, 2000)
         }
         loadSourceLogo()
+        updateSubscriptionLabel()
 
         // 主题切换重建后：先用上次缓存的分类立即渲染，再走网络静默刷新
         var renderedFromCache = false
@@ -208,6 +241,22 @@ class HomeFragment : BaseVbFragment<FragmentHomeBinding>() {
                 loadConfig()
             }
         }
+    }
+
+    /**
+     * 顶栏「订阅」胶囊显示当前生效的订阅名（原来是固定的"订阅"二字，看不出用的是哪份配置）。
+     *
+     * <p>名字可能来自两种途径：订阅列表里那条记录，或列表里还没有内置源时按地址识别。
+     * 都对不上（手填地址、老配置）就退回"订阅"，不留空胶囊。
+     *
+     * <p>和切换面板里那条一样原样显示，不做任何裁剪，方便一眼核对当前用的是哪份配置。
+     */
+    private fun updateSubscriptionLabel() {
+        val url = Hawk.get(HawkConfig.API_URL, "")
+        val subs: MutableList<Subscription> = Hawk.get(HawkConfig.SUBSCRIPTIONS, ArrayList())
+        val name = subs.firstOrNull { it.url == url }?.name
+            ?: if (BuiltinConfig.isBuiltin(url)) BuiltinConfig.DEFAULT_NAME else null
+        mBinding.subContainer.text = if (name.isNullOrEmpty()) "订阅" else name
     }
 
     /**
@@ -358,10 +407,10 @@ class HomeFragment : BaseVbFragment<FragmentHomeBinding>() {
         textView.text = text
         textView.gravity = Gravity.CENTER
         textView.setPadding(
-            ConvertUtils.dp2px(20f),
-            ConvertUtils.dp2px(10f),
-            ConvertUtils.dp2px(5f),
-            ConvertUtils.dp2px(10f)
+            ConvertUtils.dp2px(14f),
+            0,
+            ConvertUtils.dp2px(14f),
+            0
         )
         return textView
     }
@@ -398,8 +447,10 @@ class HomeFragment : BaseVbFragment<FragmentHomeBinding>() {
                         return fragments.size
                     }
                 }
-            //tab和vp绑定
-            install(mBinding.mViewPager, mBinding.tabLayout, true)
+            //tab和vp绑定。第三个参数是 forceSmoothScroll：开着时点任意 tab 都会逐页滚过去，
+            //而主页那一页是整屏的轮播大图、分类页又是透明底，滚过的路上等于把轮播图
+            //铺到了其他分类页上（看着就像别的 tab 也在放轮播）。所以这里要 false：点 tab 直接切。
+            install(mBinding.mViewPager, mBinding.tabLayout, false)
         }
     }
 
@@ -420,49 +471,135 @@ class HomeFragment : BaseVbFragment<FragmentHomeBinding>() {
         mHandler.removeCallbacksAndMessages(null)
     }
 
+    /**
+     * 首页数据源（站点）切换：底部弹出面板。
+     */
     private fun showSiteSwitch() {
         val sites = ApiConfig.get().sourceBeanList
         if (sites.size > 0) {
-            val dialog = SelectDialog<SourceBean>(requireActivity())
-            val tvRecyclerView = dialog.findViewById<TvRecyclerView>(R.id.list)
-            tvRecyclerView.setLayoutManager(V7GridLayoutManager(dialog.context, 2))
-            dialog.setTip("请选择首页数据源")
-            dialog.setAdapter(object : SelectDialogInterface<SourceBean?> {
-                override fun click(value: SourceBean?, pos: Int) {
-                    ApiConfig.get().setSourceBean(value)
-                    refreshHomeSources()
-                }
-
-                override fun getDisplay(source: SourceBean?): String {
-                    return if (source == null) "" else source.name
-                }
-
-                /**
-                 * 站点封面：配置里写了 pic/logo/image/cover 就用网络图，
-                 * 否则退回名称首字头像（之前这个列表只有纯文字，看着很干）。
-                 */
-                override fun getPic(source: SourceBean?): String? {
-                    return source?.pic
-                }
-
-                override fun getAvatarText(source: SourceBean?): String? {
-                    val name = source?.name ?: return null
-                    val first = name.trim().firstOrNull() ?: return null
-                    return first.toString()
-                }
-            }, object : DiffUtil.ItemCallback<SourceBean>() {
-                override fun areItemsTheSame(oldItem: SourceBean, newItem: SourceBean): Boolean {
-                    return oldItem === newItem
-                }
-
-                override fun areContentsTheSame(oldItem: SourceBean, newItem: SourceBean): Boolean {
-                    return oldItem.key.contentEquals(newItem.key)
-                }
-            }, sites, sites.indexOf(ApiConfig.get().homeSourceBean))
-            dialog.show()
+            showPickDialog(
+                "请选择首页数据源",
+                sites,
+                sites.indexOf(ApiConfig.get().homeSourceBean),
+                2,
+                null, null,
+                { source ->
+                    applyHomeSource(source)
+                },
+                { source -> source?.name ?: "" }
+            )
         } else {
             ToastUtils.showLong("暂无可用数据源")
         }
+    }
+
+    /**
+     * 换首页数据源：只重刷首页，不重启 Activity。
+     *
+     * <p>订阅配置（sites / jar / lives）本来就在内存里，换源只是改「哪个站点当首页」，
+     * 再走一遍 loadConfig + loadJar 等于把整份订阅重新加载一遍：白等几秒，还会闪一下加载遮罩。
+     * 这里只把新源的分类重新拉一次 —— 数据回来后 {@link #initViewPager} 会重建 tab 和页面，
+     * 直播 / 历史收藏 / 我的三页与首页数据源无关，保持原样不动。
+     */
+    private fun applyHomeSource(source: SourceBean) {
+        ApiConfig.get().setSourceBean(source)
+        mSortRetries = 0
+        initData()
+    }
+
+    /**
+     * 订阅切换：底部弹出面板，顶部「配置订阅 / 直播订阅」分段切换。
+     *
+     * <p>面板和列表条目都复用订阅管理页那一套（SubscriptionAdapter），只是把删除按钮收起来：
+     * 这里只做「选」，增删改、重命名、置顶仍回订阅管理页做。
+     *
+     * <p>两类订阅各有各的生效项（配置订阅看 API_URL，直播订阅看 LIVE_URL），混在一个列表里
+     * 容易点错 —— 切直播源顺手把片源也换掉，所以分成两段各选各的。
+     *
+     * <p>内置源可能还不在列表里（老版本升级上来、或从没进过订阅管理页），这里补一条，
+     * 免得面板是空的、点上去反而跳走了整页。生效地址不在列表里时也不跳走：
+     * 让面板照常出现，只是暂时没有选中项，用户点哪条就切到哪条。
+     */
+    private fun showSubscriptionSwitch() {
+        val stored: MutableList<Subscription> = Hawk.get(HawkConfig.SUBSCRIPTIONS, ArrayList())
+        val currentUrl = Hawk.get(HawkConfig.API_URL, "")
+        val subs = ArrayList<Subscription>(stored)
+        if (subs.none { BuiltinConfig.isBuiltin(it.url) }) {
+            val builtin = Subscription(BuiltinConfig.DEFAULT_NAME, BuiltinConfig.DEFAULT_URL)
+            builtin.isTop = true
+            builtin.setChecked(stored.none { it.isChecked } || currentUrl == builtin.url)
+            subs.add(0, builtin)
+        }
+        val lives = ArrayList(LiveSubscriptionStore.load())
+        // 直播订阅的选中态由当前生效的 LIVE_URL 决定，不额外存一份，避免两处不一致
+        val currentLiveUrl = Hawk.get(HawkConfig.LIVE_URL, "")
+        for (item in lives) {
+            item.setChecked(item.url == currentLiveUrl)
+        }
+        XPopup.Builder(mActivity)
+            .asCustom(
+                SubscriptionPickDialog(requireActivity(), subs, lives)
+                    .setOnPick { item, live ->
+                        if (live) applyLiveSubscription(item) else applySubscription(item, subs)
+                    }
+            )
+            .show()
+    }
+
+    /** 面板里点中某条订阅：改选中态并落盘，再重载首页让新配置生效 */
+    private fun applySubscription(picked: Subscription?, subs: MutableList<Subscription>) {
+        val url = picked?.url ?: return
+        for (item in subs) {
+            item.setChecked(item.url == url)
+        }
+        Hawk.put(HawkConfig.API_URL, url)
+        Hawk.put<List<Subscription>?>(HawkConfig.SUBSCRIPTIONS, subs)
+        refreshHomeSources()
+    }
+
+    /**
+     * 面板里点中某个直播源：只换 LIVE_URL，不动配置订阅。
+     *
+     * <p>内存里那条 live 地址是加载配置时对 LIVE_URL 的快照，不刷新的话下一次开播还是旧源，
+     * 所以补一次 {@link ApiConfig#syncLiveUrl}；直播是独立 Activity，回不进面板这条链路，
+     * 用户下次点直播就是新源。
+     */
+    private fun applyLiveSubscription(picked: Subscription) {
+        Hawk.put(HawkConfig.LIVE_URL, picked.url)
+        ApiConfig.get().syncLiveUrl()
+        ToastUtils.showShort("已切换到该直播源")
+    }
+
+    private fun <T> showPickDialog(
+        title: String,
+        data: List<T>,
+        select: Int,
+        spanCount: Int,
+        manageLabel: String?,
+        onManage: Runnable?,
+        onPick: (T) -> Unit,
+        display: (T?) -> String
+    ) {
+        val dialog = BottomPickDialog(
+            requireActivity(),
+            title,
+            object : SelectDialogInterface<T> {
+                override fun click(value: T?, pos: Int) {}
+
+                override fun getDisplay(value: T?): String = display(value)
+            },
+            object : DiffUtil.ItemCallback<T>() {
+                override fun areItemsTheSame(oldItem: T, newItem: T): Boolean =
+                    oldItem === newItem
+
+                override fun areContentsTheSame(oldItem: T, newItem: T): Boolean =
+                    oldItem == newItem
+            },
+            data, select, spanCount, manageLabel, onManage
+        ).setOnPick { value, _ -> onPick(value) }
+        XPopup.Builder(mActivity)
+            .asCustom(dialog)
+            .show()
     }
 
     private fun refreshHomeSources() {
@@ -495,13 +632,13 @@ class HomeFragment : BaseVbFragment<FragmentHomeBinding>() {
             // 查询完成后更新UI
             if (vodInfoList.isNotEmpty() && vodInfoList[0] != null) {
                 // 位置固定紧贴悬浮 dock 上方（无缝隙），弹窗高/宽与 dock 一致（高 76dp，宽=屏宽-2×14dp）：
-                // offsetY = 屏高 - 导航栏避让 - (dock 底边距 4dp + dock 76dp) - 弹窗高 76dp
+                // offsetY = 屏高 - 导航栏避让 - (dock 底边距 10dp + dock 56dp) - 弹窗高 76dp
                 val density = resources.displayMetrics.density
                 val decor = requireActivity().window.decorView
                 val insets = androidx.core.view.WindowInsetsCompat.toWindowInsetsCompat(decor.rootWindowInsets)
                 val navInset = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.navigationBars()).bottom
                 val offsetY = (ScreenUtils.getAppScreenHeight() - navInset -
-                        (4 + 76 + 76) * density).toInt()
+                        (10 + 56 + 76) * density).toInt()
                 XPopup.Builder(context)
                     .hasShadowBg(false)
                     .isDestroyOnDismiss(true)

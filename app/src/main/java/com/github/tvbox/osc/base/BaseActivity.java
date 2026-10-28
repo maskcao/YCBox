@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.res.AssetManager;
 import android.content.res.Configuration;
+import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -23,6 +24,7 @@ import androidx.core.view.WindowInsetsControllerCompat;
 
 import com.blankj.utilcode.util.ActivityUtils;
 import com.blankj.utilcode.util.AppUtils;
+import com.blankj.utilcode.util.ToastUtils;
 import com.github.tvbox.osc.R;
 import com.github.tvbox.osc.callback.EmptyCallback;
 import com.github.tvbox.osc.callback.LoadingCallback;
@@ -114,6 +116,7 @@ public abstract class BaseActivity extends AppCompatActivity implements CustomAd
         }
         mContext = this;
         AppManager.getInstance().addActivity(this);
+        applyToastStyle();
         initStatusBar();
         if (supportWallpaper()) {
             attachWallpaperLayer();
@@ -123,6 +126,20 @@ public abstract class BaseActivity extends AppCompatActivity implements CustomAd
         if (!App.getInstance().isNormalStart){
             AppUtils.relaunchApp(true);
         }
+    }
+
+    /**
+     * Toast 配色跟随当前主题。
+     *
+     * <p>utilcode 的 Toast 样式是写死在库资源里的浅色药丸（背景 #E6EEEEEE、文字
+     * #DE000000），且没有 night 变体，深色主题下会突然冒出一块白。它是全局单例配置，
+     * 所以每个 Activity 创建时按自己的主题重设一次即可 —— 换主题会重建 Activity，
+     * 不必额外找切换点通知它。
+     */
+    private void applyToastStyle() {
+        ToastUtils.getDefaultMaker()
+                .setBgColor(ContextCompat.getColor(this, R.color.toast_bg))
+                .setTextColor(ContextCompat.getColor(this, R.color.toast_fg));
     }
 
     /**
@@ -146,34 +163,38 @@ public abstract class BaseActivity extends AppCompatActivity implements CustomAd
 
     private void initStatusBar(){
         final boolean lightIcon = !isDarkNow();
-        // 底部手势条那一块的底色，必须显式交给 ImmersionBar。
-        // 它内部 BarParams 的 navigationBarColor 初值是 0xFF000000（纯黑），而且 setBar()
-        // 会在 onResume / onConfigurationChanged 里再次下发 —— 也就是说只在外面调
-        // Window.setNavigationBarColor 是压不住的，切换主题之后照样会被它改回黑色。
-        // 表现就是：深色主题下看不出来（本来就是黑的），浅色主题下底部突然一条黑带。
-        final int navColor = currentNavBarColor();
+        // 和 NewBox 的 BaseActivity 一样：所有页面的系统导航栏都保持透明，
+        // 手势条后面由窗口底色 / 壁纸层 / 页面背景自然透出（真正的导航栏沉浸）。
+        // ImmersionBar 内部 BarParams 的初值是纯黑，且 setBar() 会在 onResume 再次下发，
+        // 所以透明值也必须显式交给它，否则浅色页底部会冒出一条黑带。
+        final int navColor = Color.TRANSPARENT;
         // 壁纸模式下，窗口底色也要跟着壁纸走。
         // 否则冷启动前几帧是主题白（windowBackground），壁纸层是 Glide 异步加载的，
         // 等它出来才变成壁纸色 —— 实测前 4 帧纯白、第 6 帧才变 #FDFCF6，
         // 表现为"刚进来底色先白一下"。把窗口底色设成同一个取样色，这段跳变就没了。
+        // 导航栏透明后这个底色还兼作手势条后面的兜底色：窗口重建期间也不会露出黑色。
         if (supportWallpaper() && WallpaperHelper.isEnabled() && WallpaperHelper.hasWallpaper(this)) {
-            getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(navColor));
+            int windowBg = WallpaperHelper.navBarColor(this, isDarkNow());
+            getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(windowBg));
         }
-        ImmersionBar.with(this)
+        ImmersionBar bar = ImmersionBar.with(this)
                 .statusBarDarkFont(lightIcon)
                 .navigationBarColorInt(navColor)
                 .navigationBarDarkIcon(lightIcon)
-                .titleBar(findTitleBar(getWindow().getDecorView().findViewById(android.R.id.content)))
-                .init();
-        // 只开 LAYOUT_HIDE_NAVIGATION（状态栏行为完全不动，避免之前状态栏沉浸的问题），
-        // 内容延伸到导航栏后面，具体避让由 attachWallpaperLayer 里的 insets 监听处理。
-        // 这样 dock 能贴着底部悬浮，而手势条那一条由窗口自己上色。
+                .titleBar(findTitleBar(getWindow().getDecorView().findViewById(android.R.id.content)));
+        if (isEdgeToEdge()) {
+            bar.statusBarColorInt(Color.TRANSPARENT);
+        }
+        bar.init();
+        // 内容延伸到系统栏后面，具体避让由 attachWallpaperLayer 里的 insets 监听处理。
+        // isEdgeToEdge() 的页面（首页）连状态栏也一起铺满，系统栏颜色保持全透明。
         Window window = getWindow();
         window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
-        // 关掉系统对透明导航栏的「对比度保护」：否则 Android 15+ 会在手势条下面
-        // 自动垫一层半透明白色圆角蒙层，看起来就是 dock 底下多出一块白。
+        // 关掉系统对透明系统栏的「对比度保护」：否则 Android 10+ 会在手势条/状态栏下面
+        // 自动垫一层半透明蒙层，看起来就是 dock 底下或顶部多出一块色带。
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             window.setNavigationBarContrastEnforced(false);
+            window.setStatusBarContrastEnforced(false);
         }
         applyNavBarAppearance();
     }
@@ -181,16 +202,12 @@ public abstract class BaseActivity extends AppCompatActivity implements CustomAd
     /**
      * 当前该给导航栏上什么色。
      *
-     * <p>壁纸模式下不再用透明：透明会让窗口重建期间（切主题 recreate、冷启动首帧）
-     * 透出下面还没销毁的旧窗口，浅色主题下就是一条黑带。改为取壁纸底部的平均色
-     * 做成不透明底（见 {@link WallpaperHelper#navBarColor}），视觉上仍像壁纸铺到底。
+     * <p>所有页面统一透明（NewBox BaseActivity 的做法）：内容延伸到手势条后面，
+     * 壁纸层或窗口底色负责兜底，因此不再区分是否有壁纸、是否首页。
+     * 对比度保护已在 initStatusBar 里关掉，避免系统自动垫一层半透明蒙层。
      */
     private int currentNavBarColor() {
-        boolean showWallpaper = supportWallpaper()
-                && WallpaperHelper.isEnabled() && WallpaperHelper.hasWallpaper(this);
-        return showWallpaper
-                ? WallpaperHelper.navBarColor(this, isDarkNow())
-                : ContextCompat.getColor(this, R.color.windowBackground);
+        return Color.TRANSPARENT;
     }
 
     /**
@@ -232,20 +249,27 @@ public abstract class BaseActivity extends AppCompatActivity implements CustomAd
         // 一旦导航栏还是透明/半透明，那一块就没有任何内容绘制，露出黑色。
         decor.setSystemUiVisibility(decor.getSystemUiVisibility()
                 | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                | View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
+                | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                | (isEdgeToEdge() ? View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN : 0));
         // 图标明暗要最后写：setSystemUiVisibility 是整体覆盖，先写会被打回去。
         WindowInsetsControllerCompat controller =
                 WindowCompat.getInsetsController(window, decor);
         controller.setAppearanceLightNavigationBars(lightIcon);
+        if (isEdgeToEdge()) {
+            // 首页铺满全屏：状态栏也透明，图标明暗跟随主题
+            controller.setAppearanceLightStatusBars(lightIcon);
+            window.setStatusBarColor(Color.TRANSPARENT);
+        }
         // 颜色也重算一次：换壁纸后导航栏取样色要跟着变（ImmersionBar 里存的是
         // init 时的旧值，不会自己更新）。
         window.setNavigationBarColor(navColor);
 
         // XPopup 的弹窗是一个**独立窗口**，导航栏颜色不跟随 Activity ——
-        // 不设全局值它就用自己默认的黑色，弹窗一出现底部立刻是一条黑带 + 白色手势条
-        // （主界面正常态是白底 + 深灰手势条，两者一眼就能区分）。
+        // 不设全局值它就用自己默认的黑色，弹窗一出现底部立刻是一条黑带 + 白色手势条。
         // 它提供了静态全局配置，在这里同步一次，20 处调用点不用逐个改。
-        XPopup.setNavigationBarColor(navColor);
+        // 弹窗内容不铺满屏幕，不能用透明值，回退到主题底色。
+        XPopup.setNavigationBarColor(navColor == Color.TRANSPARENT
+                ? ContextCompat.getColor(this, R.color.windowBackground) : navColor);
         XPopup.setIsLightNavigationBar(lightIcon);
     }
 
@@ -282,6 +306,11 @@ public abstract class BaseActivity extends AppCompatActivity implements CustomAd
         // 导航栏透明后，页面内容会延伸到手势条下面：给页面根布局（壁纸层之上的所有子 View）
         // 垫上导航栏高度，让 dock 等贴底控件抬到手势条之上；壁纸/遮罩层保持全屏铺满。
         content.setOnApplyWindowInsetsListener((v, insets) -> {
+            // 全屏页面自己处理系统栏避让（dock 按 nav inset 上移），
+            // 父层不能再垫 padding，否则内容就被挡在导航栏之上，做不出沉浸效果。
+            if (isEdgeToEdge()) {
+                return insets;
+            }
             int bottom = insets.getSystemWindowInsetBottom();
             for (int i = content.getChildCount() - 1; i >= 2; i--) {
                 View child = content.getChildAt(i);
@@ -325,6 +354,16 @@ public abstract class BaseActivity extends AppCompatActivity implements CustomAd
     /** 不想显示壁纸的页面（比如全屏播放）覆写返回 false */
     protected boolean supportWallpaper() {
         return true;
+    }
+
+    /**
+     * 内容是否铺满整屏（状态栏、导航栏都透明，页面绘制到系统栏后面）。
+     *
+     * <p>默认关闭：二级页面带标题栏，铺满后标题会顶到状态栏下面。
+     * 目前只有主界面（首页 + 悬浮 dock）需要 NewBox 那种全屏效果。
+     */
+    protected boolean isEdgeToEdge() {
+        return false;
     }
 
     @Override

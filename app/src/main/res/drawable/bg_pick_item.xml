@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 底部选择面板条目底：选中用描边，未选中保持原来的圆角灰底。
+     面板是双列卡片，再放一个对勾圆圈既挤又抢视线，所以只勾边不勾点。 -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_selected="true">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/bg_gray" />
+            <corners android:radius="10dp" />
+            <stroke
+                android:width="2dp"
+                android:color="@color/accent_solid" />
+        </shape>
+    </item>
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="@color/bg_gray" />
+            <corners android:radius="10dp" />
+        </shape>
+    </item>
+</selector>

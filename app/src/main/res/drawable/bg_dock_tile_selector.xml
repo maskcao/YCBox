@@ -4,8 +4,8 @@
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:state_selected="true">
         <shape android:shape="rectangle">
-            <solid android:color="@color/dock_accent" />
-            <corners android:radius="9dp" />
+            <solid android:color="@color/dock_accent_soft" />
+            <corners android:radius="12dp" />
         </shape>
     </item>
     <item android:drawable="@android:color/transparent" />

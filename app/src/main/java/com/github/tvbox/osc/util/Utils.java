@@ -12,6 +12,7 @@ import com.github.tvbox.osc.bean.VideoInfo;
 import com.github.tvbox.osc.bean.VodInfo;
 import com.orhanobut.hawk.Hawk;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Formatter;
 import java.util.List;
@@ -86,7 +87,17 @@ public class Utils {
                 videoInfo.setResolution(cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Video.Media.RESOLUTION)));
                 videoInfo.setIsPrivate(cursor.getInt(cursor.getColumnIndexOrThrow(MediaStore.Video.Media.IS_PRIVATE)));
                 videoInfo.setBucketId(cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Video.Media.BUCKET_ID)));
-                videoInfo.setBucketDisplayName(cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Video.Media.BUCKET_DISPLAY_NAME)));
+                String bucketName = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Video.Media.BUCKET_DISPLAY_NAME));
+                if (bucketName == null || bucketName.trim().isEmpty()) {
+                    String path = videoInfo.getPath();
+                    File parent = path == null ? null : new File(path).getParentFile();
+                    if (parent != null && parent.equals(android.os.Environment.getExternalStorageDirectory())) {
+                        bucketName = "本地存储";
+                    } else {
+                        bucketName = parent == null ? "本地存储" : parent.getName();
+                    }
+                }
+                videoInfo.setBucketDisplayName(bucketName);
                 videoInfo.setBookmark(cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Video.Media.BOOKMARK)));
                 videoList.add(videoInfo);
             } while (cursor.moveToNext());

@@ -1,31 +1,34 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- 壁纸层由 BaseActivity 统一注入到 android.R.id.content，这里不再单独放。
-     dock 用 FrameLayout 悬浮在 ViewPager 内容之上，不再占据底部布局空间 -->
+     MainActivity 走 edge-to-edge：内容铺满整屏（含状态栏/手势条后面），
+     dock 作为悬浮层盖在内容之上，底部避让在代码里按导航栏 inset 计算 -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@android:color/transparent"
+    android:clipChildren="false"
     tools:context=".ui.activity.MainActivity">
 
+    <!-- 内容铺满整屏并延伸到 dock 后面：列表靠自身的 paddingBottom 滚动出最后一屏 -->
     <androidx.viewpager.widget.ViewPager
         android:id="@+id/vp"
         android:layout_width="match_parent"
         android:layout_height="match_parent"/>
 
-    <!-- 悬浮药丸 dock：底色与「我的」页设置卡片一致（bg_surface），左右留边浮于内容上。
-         自绘条目（view_dock_item）：图标 44dp 明显大于 12sp 汉字，图标+文字整体居中 -->
-    <LinearLayout
+    <!-- 悬浮磨砂玻璃 dock（NewBox 玻璃导航尺寸）：GlassDockView 自己把背后内容糊成
+         一层磨砂底，再叠 NewBox 的 40% 黑雾 + 1dp 40% 白描边和 8dp 抬起投影；
+         父层 clipChildren=false 才让投影画得出自身边界 -->
+    <com.github.tvbox.osc.ui.widget.GlassDockView
         android:id="@+id/dock_bar"
         android:layout_width="match_parent"
-        android:layout_height="68dp"
+        android:layout_height="56dp"
         android:layout_gravity="bottom"
-        android:layout_marginStart="14dp"
-        android:layout_marginEnd="14dp"
-        android:layout_marginBottom="4dp"
-        android:background="@drawable/bg_dock_pill"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="12dp"
         android:gravity="center_vertical"
         android:orientation="horizontal"
-        android:paddingVertical="6dp" />
+        android:paddingVertical="4dp" />
 </FrameLayout>

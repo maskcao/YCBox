@@ -81,25 +81,30 @@
             app:layout_constraintTop_toTopOf="@id/tv_name"
             tools:visibility="visible" />
 
-        <!-- 标签容器：固定贴右，宽度随内容；标签 GONE 时整体宽度为 0，
-             名称就自动铺满整行 -->
+        <!-- 标签容器：跟随在名称右侧、贴右对齐；constrainedWidth 让它在名称与右边缘
+             之间自适应——名称短时标签完整展开，名称长时才收缩（内容自身再省略）。
+             标签 GONE 时整体宽度为 0，名称就自动铺满整行 -->
         <LinearLayout
             android:id="@+id/ll_tags"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginStart="6dp"
             android:orientation="horizontal"
+            app:layout_constrainedWidth="true"
             app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="1"
+            app:layout_constraintStart_toEndOf="@id/tv_name"
             app:layout_constraintTop_toTopOf="@id/tv_name">
 
             <!-- 「来自：xxx」小标签（仅直播订阅显示）：半透明蓝圆角。
-                 限宽 88dp —— 长来源名省略即可，绝不能把名称挤没了 -->
+                 不再限死 maxWidth（72dp 连"来自：订阅: 2"都装不下，必截断），
+                 宽度由上面的容器按剩余空间分配，只有名称真的很长时才会省略 -->
             <TextView
                 android:id="@+id/tv_from"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:background="@drawable/bg_tag_from"
                 android:ellipsize="end"
-                android:maxWidth="72dp"
                 android:paddingHorizontal="6dp"
                 android:paddingVertical="2dp"
                 android:singleLine="true"
