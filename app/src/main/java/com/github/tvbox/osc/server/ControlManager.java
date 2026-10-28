@@ -49,6 +49,13 @@ public class ControlManager {
     }
 
     public String getAddress(boolean local) {
+        // mServer 要等首页 init 里 startServer() 之后才有；而订阅解析中替换 proxy://
+        // (DefaultConfig.checkReplaceProxy)、js 爬虫取代理地址都可能先走到这里，
+        // 直接点 mServer 就是一个 NPE，表现成"订阅拉不出来之后闪退"。
+        // 地址只依赖静态端口，服务器起没起都能拼出这一串，请求失败交给网络层报。
+        if (mServer == null) {
+            return "http://127.0.0.1:" + RemoteServer.serverPort + "/";
+        }
         return local ? mServer.getLoadAddress() : mServer.getServerAddress();
     }
 

@@ -365,32 +365,25 @@ class HomeFragment : BaseVbFragment<FragmentHomeBinding>() {
     }
 
     private fun showTipDialog(msg: String) {
+        // 拉配置是异步的，error 最晚要等 10s 超时回来才走到这里。这期间用户切走 tab、
+        // 息屏、或系统重建界面，fragment 已经脱离 activity：此时 requireActivity() 抛
+        // IllegalStateException，把弹窗 show 到已销毁的 window 上抛 BadTokenException，
+        // 表现就是"订阅加载失败之后过一会儿闪退"。
+        val act = activity ?: return
+        if (isDetached || act.isFinishing || act.isDestroyed) return
         if (errorTipDialog == null) {
             errorTipDialog =
-                TipDialog(requireActivity(), msg, "重试", "取消", object : TipDialog.OnListener {
+                TipDialog(act, msg, "重试", "取消", object : TipDialog.OnListener {
                     override fun left() {
-                        mHandler.post {
-                            initData()
-                            errorTipDialog?.hide()
-                        }
+                        reloadFromDialog(false)
                     }
 
                     override fun right() {
-                        dataInitOk = true
-                        jarInitOk = true
-                        mHandler.post {
-                            initData()
-                            errorTipDialog?.hide()
-                        }
+                        reloadFromDialog(true)
                     }
 
                     override fun cancel() {
-                        dataInitOk = true
-                        jarInitOk = true
-                        mHandler.post {
-                            initData()
-                            errorTipDialog?.hide()
-                        }
+                        reloadFromDialog(true)
                     }
 
                     override fun onTitleClick() {
@@ -399,7 +392,29 @@ class HomeFragment : BaseVbFragment<FragmentHomeBinding>() {
                     }
                 })
         }
-        if (!errorTipDialog!!.isShowing) errorTipDialog!!.show()
+        val dialog = errorTipDialog ?: return
+        if (!dialog.isShowing) dialog.show()
+    }
+
+    /**
+     * 弹窗三个按钮最终都是「关掉弹窗 + 重新走一遍加载」。
+     *
+     * <p>markInited 对应原来「取消/换源」那两条：先把两个 init 标记置上，
+     * initData 才会跳过等回调的分支、直接重拉。
+     *
+     * <p>post 里再过一次 attach：弹窗比 fragment 活得久的情况（旋转、系统回收）真实存在，
+     * 那时 initData() 摸 mBinding 就是 NPE。
+     */
+    private fun reloadFromDialog(markInited: Boolean) {
+        mHandler.post {
+            errorTipDialog?.hide()
+            if (!isAdded || view == null) return@post
+            if (markInited) {
+                dataInitOk = true
+                jarInitOk = true
+            }
+            initData()
+        }
     }
 
     private fun getTabTextView(text: String): TextView {

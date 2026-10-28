@@ -181,7 +181,7 @@ public abstract class BaseActivity extends AppCompatActivity implements CustomAd
                 .statusBarDarkFont(lightIcon)
                 .navigationBarColorInt(navColor)
                 .navigationBarDarkIcon(lightIcon)
-                .titleBar(findTitleBar(getWindow().getDecorView().findViewById(android.R.id.content)));
+                .titleBar(resolveTitleBar());
         if (isEdgeToEdge()) {
             bar.statusBarColorInt(Color.TRANSPARENT);
         }
@@ -379,6 +379,24 @@ public abstract class BaseActivity extends AppCompatActivity implements CustomAd
         if (getTitleBar() != null) {
             getTitleBar().setOnTitleBarListener(this);
         }
+    }
+
+    /**
+     * 交给 ImmersionBar 垫状态栏高度的那条标题栏。
+     *
+     * <p>优先找 hjq {@link TitleBar}（绝大多数页面用它，自带避让）；个别页面
+     * （比如首页分区的「全部」）是自己画的一条返回栏，不是 TitleBar 实例，
+     * 覆写 {@link #customTitleBar()} 把它交上来，否则整条栏会顶到状态栏底下。
+     */
+    private View resolveTitleBar() {
+        TitleBar titleBar = findTitleBar(
+                getWindow().getDecorView().findViewById(android.R.id.content));
+        return titleBar != null ? titleBar : customTitleBar();
+    }
+
+    /** 页面自绘的标题栏（非 hjq TitleBar），默认没有 */
+    protected View customTitleBar() {
+        return null;
     }
 
     /**

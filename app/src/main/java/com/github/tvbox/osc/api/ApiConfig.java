@@ -977,11 +977,14 @@ public class ApiConfig {
     }
 
     public IJKCode getIJKCodec(String name) {
-        for (IJKCode code : getIjkCodes()) {
+        // 走 getIjkCodes() 而不是裸字段：订阅没解析成功时 ijkCodes 还是 null，
+        // 兜底取第一条就会 NPE（getIjkCodes() 在这种情况下回落到内置默认解码配置）。
+        List<IJKCode> codes = getIjkCodes();
+        for (IJKCode code : codes) {
             if (code.getName().equals(name))
                 return code;
         }
-        return ijkCodes.get(0);
+        return codes.get(0);
     }
 
     String clanToAddress(String lanLink) {

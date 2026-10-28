@@ -2,6 +2,7 @@ package com.github.tvbox.osc.ui.activity;
 
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.view.View;
 import android.widget.TextView;
 
 import androidx.recyclerview.widget.GridLayoutManager;
@@ -27,6 +28,13 @@ public class SectionAllActivity extends BaseActivity {
     @Override
     protected int getLayoutResID() {
         return R.layout.activity_section_all;
+    }
+
+    @Override
+    protected View customTitleBar() {
+        // 这条返回栏是自己画的，不是 hjq TitleBar；不交出去的话状态栏高度没人垫，
+        // 标题会顶到状态栏底下
+        return findViewById(R.id.llHeader);
     }
 
     @SuppressWarnings("unchecked")
