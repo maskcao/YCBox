@@ -37,11 +37,15 @@ import java.lang.ref.WeakReference;
  * 海报轮廓还能隐约透出来。
  *
  * <p>刷新由 {@link ViewTreeObserver.OnPreDrawListener} 驱动，只在「内容滚动了」
- * 或「自己位置变了」的那一帧重录，静止时不产生任何额外帧。捕获区按 3 倍模糊半径
- * 向外扩一圈，玻璃边缘才有真实内容可糊（只按自身尺寸取再 CLAMP 会把边框像素拖脏）。
+ * 「自己位置变了」或有人显式 {@link #refresh()} 的那一帧重录，静止时不产生额外帧。
+ * 捕获区按 4 倍模糊半径向外扩一圈，玻璃边缘才有真实内容可糊（只按自身尺寸取再
+ * CLAMP 会把边框像素拖脏）。同窗口几块玻璃共用一份底图，新底图与旧底图去色淡入。
  *
- * <p>没走 {@code RenderNode + RenderEffect} 的 GPU 路线：实测半径大到 200dp 时
- * HWUI 会静默丢掉整个 effect，玻璃后面又变回清晰的原文，反而不如位图路线可靠。
+ * <p>没走 {@code RenderNode + RenderEffect} 的 GPU 路线：实测半径大到 200dp 时 HWUI
+ * 会静默丢掉整个 effect；把半径降到能生效后，录进节点的窗口内容会连同玻璃面自己的
+ * RenderNode 一起被引用（父节点的显示列表是缓存的，临时 INVISIBLE 也躲不掉），玻璃
+ * 画共享节点、共享节点又画玻璃 —— 渲染线程在 {@code RenderNode::prepareTreeImpl}
+ * 里无限递归直接栈溢出。同窗口内「镜像自己背后」这件事只有软件重画做得到。
  */
 public final class GlassBackdrop {
 
@@ -64,20 +68,19 @@ public final class GlassBackdrop {
     /** 盒式模糊趟数，越多越接近高斯，不会留下方框形的痕迹 */
     private static final int BLUR_PASSES = 2;
     /**
-     * 同一块玻璃两次重录的最小间隔。糊底刷新到 10fps 肉眼已和逐帧看不出区别，
-     * 但录制是主线程上实打实的开销：首页六个玻璃面挂在同一个 ViewTreeObserver 上，
-     * 轮播一动就一直触发重录，间隔太短会持续掉帧。
-     */
-    /**
-     * 同一窗口的所有玻璃共用一份全窗底图后的录制节奏。录制已裁到玻璃覆盖的横带、
-     * 六块玻璃一周期只录一次，60ms（≈16fps 的糊底刷新）足够跟上切页和滚动。
+     * 同一窗口的所有玻璃共用一份全窗底图后的录制节奏。实测一次共享录制 3~7ms、
+     * 每块玻璃裁切+模糊约 2ms，整窗五块玻璃一周期约 20ms；再往下压到 45ms 时
+     * 横滑的中位帧耗时从 81ms 涨到 117ms，得不偿失，故停在 60ms（≈16fps 刷新），
+     * 台阶感交给下面的淡入去抹。
      */
     private static final long RECAPTURE_INTERVAL_MS = 60L;
+    /** 每块玻璃的刷新节奏再错开 0~15ms，避免同一帧里五份裁切+模糊叠在一起 */
+    private static final long RECAPTURE_JITTER_MS = 15L;
     /**
-     * 每块玻璃的刷新节奏再错开 0~20ms。六个玻璃面挂在同一个 ViewTreeObserver 上，
-     * 间隔取一样的话会在同一帧一起重录，那一帧凭空多出几十毫秒；错开后平摊掉。
+     * 新旧底图的去色淡入时长。底图最快也只有 16fps，直接换帧会看到背景色一格一格跳；
+     * 淡入把台阶抹平成连续的溶化，代价只是淡入期间每帧多画一个圆角矩形。
      */
-    private static final long RECAPTURE_JITTER_MS = 20L;
+    private static final long FADE_MS = 120L;
 
     private static final ColorMatrixColorFilter SATURATION_FILTER = saturate(SATURATION);
 
@@ -108,9 +111,16 @@ public final class GlassBackdrop {
     private int captureW;
     private int captureH;
 
-    private Bitmap backdrop;
-    private BitmapShader backdropShader;
-    private Paint backdropPaint;
+    /** 双缓冲底图：{@code buffers[shown]} 是当前在显示的，新底图永远画进另一块 */
+    private final Bitmap[] buffers = new Bitmap[2];
+    private int shown = 1;
+    /** 上一次捕获的底图，淡入期间和新的叠着画；可能为 null（首帧） */
+    private Bitmap previous;
+    private BitmapShader curShader;
+    private BitmapShader prevShader;
+    private long fadeStartAt;
+    private final Paint curPaint = backdropPaint();
+    private final Paint prevPaint = backdropPaint();
     private int[] blurPixels;
     private int[] blurTemp;
 
@@ -192,12 +202,13 @@ public final class GlassBackdrop {
             sharedCapture.recycle();
             sharedCapture = null;
         }
-        if (backdrop != null) {
-            backdrop.recycle();
-            backdrop = null;
+        for (int i = 0; i < buffers.length; i++) {
+            if (buffers[i] != null && !buffers[i].isRecycled()) buffers[i].recycle();
+            buffers[i] = null;
         }
-        backdropShader = null;
-        backdropPaint = null;
+        previous = null;
+        curShader = null;
+        prevShader = null;
         blurPixels = null;
         blurTemp = null;
         pending = false;
@@ -217,24 +228,31 @@ public final class GlassBackdrop {
      * @return false 表示还没有可用底图，调用方自己铺一层底色
      */
     public boolean draw(Canvas canvas, int w, int h) {
-        Bitmap bmp = backdrop;
-        if (w <= 0 || h <= 0 || bmp == null || bmp.isRecycled() || backdropShader == null) {
-            return false;
-        }
-        if (backdropPaint == null) {
-            // 饱和度已经烘进底图，这里只做双线性放大
-            backdropPaint = new Paint(Paint.ANTI_ALIAS_FLAG | Paint.FILTER_BITMAP_FLAG);
-        }
-        shaderMatrix.setScale((float) captureW / bmp.getWidth(),
-                (float) captureH / bmp.getHeight());
-        shaderMatrix.postTranslate(-margin, -margin);
-        backdropShader.setLocalMatrix(shaderMatrix);
-        backdropPaint.setShader(backdropShader);
+        if (w <= 0 || h <= 0) return false;
+        Bitmap cur = buffers[shown];
+        if (cur == null || cur.isRecycled() || curShader == null) return false;
         float radius = corner(w, h);
-        canvas.drawRoundRect(0, 0, w, h, radius, radius, backdropPaint);
+        long age = SystemClock.uptimeMillis() - fadeStartAt;
+        if (previous != null && !previous.isRecycled() && prevShader != null && age < FADE_MS) {
+            // 旧底图铺底、新底图按进度淡入：背景色是「溶过去」的，
+            // 而不是每 45ms 硬跳一格——跳格就是用户看到的「颜色切换」
+            prevPaint.setShader(prevShader);
+            prevPaint.setAlpha(255);
+            canvas.drawRoundRect(0, 0, w, h, radius, radius, prevPaint);
+            curPaint.setShader(curShader);
+            curPaint.setAlpha((int) (255f * age / FADE_MS));
+            canvas.drawRoundRect(0, 0, w, h, radius, radius, curPaint);
+            host.postInvalidateOnAnimation();
+            return true;
+        }
+        previous = null;
+        curPaint.setShader(curShader);
+        curPaint.setAlpha(255);
+        canvas.drawRoundRect(0, 0, w, h, radius, radius, curPaint);
         return true;
     }
 
+    /** 玻璃在窗口里可见、尺寸有效，并把窗口坐标写进 {@link #hostLoc} */
     private boolean shouldCapture() {
         int w = host.getWidth();
         int h = host.getHeight();
@@ -256,13 +274,11 @@ public final class GlassBackdrop {
         int bh = Math.max(1, Math.round(captureH / CAPTURE_SCALE));
         Bitmap shared = ensureShared(root, lastCaptureAt);
         if (shared == null) return;
-        Bitmap bmp = backdrop;
-        if (bmp == null || bmp.isRecycled() || bmp.getWidth() != bw || bmp.getHeight() != bh) {
-            if (bmp != null && !bmp.isRecycled()) bmp.recycle();
-            bmp = Bitmap.createBitmap(bw, bh, Bitmap.Config.ARGB_8888);
-            backdrop = bmp;
-        }
-        backdropShader = new BitmapShader(bmp, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP);
+        // 双缓冲：新底图画进「当前没在显示」的那块，画完再交换。
+        // 单缓冲会在淡入途中被 Canvas 改写，正在溶化的那一帧就闪了。
+        ensureBuffers(bw, bh);
+        int target = 1 - shown;
+        Bitmap bmp = buffers[target];
         Canvas canvas = new Canvas(bmp);
         // 透明底：玻璃后面没画到的地方直接露出真实内容，不会发黑
         canvas.drawColor(0, PorterDuff.Mode.CLEAR);
@@ -271,6 +287,31 @@ public final class GlassBackdrop {
                 -Math.round(hostLoc[1] / CAPTURE_SCALE), null);
         int radius = Math.round(density * BLUR_RADIUS_DP * BLUR_MELT_FACTOR / CAPTURE_SCALE);
         boxBlur(bmp, radius, BLUR_PASSES);
+        shown = target;
+        curShader = shaderFor(bmp);
+        prevShader = buffers[1 - target] == null ? null : shaderFor(buffers[1 - target]);
+        previous = buffers[1 - target];
+        fadeStartAt = SystemClock.uptimeMillis();
+    }
+
+    private void ensureBuffers(int bw, int bh) {
+        if (buffers[0] != null && !buffers[0].isRecycled()
+                && buffers[0].getWidth() == bw && buffers[0].getHeight() == bh) return;
+        for (int i = 0; i < 2; i++) {
+            if (buffers[i] != null && !buffers[i].isRecycled()) buffers[i].recycle();
+            buffers[i] = Bitmap.createBitmap(bw, bh, Bitmap.Config.ARGB_8888);
+        }
+        previous = null;
+        fadeStartAt = 0L;
+    }
+
+    private BitmapShader shaderFor(Bitmap bmp) {
+        BitmapShader shader = new BitmapShader(bmp, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP);
+        shaderMatrix.setScale((float) captureW / bmp.getWidth(),
+                (float) captureH / bmp.getHeight());
+        shaderMatrix.postTranslate(-margin, -margin);
+        shader.setLocalMatrix(shaderMatrix);
+        return shader;
     }
 
     /**
@@ -417,6 +458,11 @@ public final class GlassBackdrop {
         Paint paint = new Paint();
         paint.setColorFilter(SATURATION_FILTER);
         return paint;
+    }
+
+    /** 底图放大用：饱和度已经烘进底图，这里只做双线性放大 */
+    private static Paint backdropPaint() {
+        return new Paint(Paint.ANTI_ALIAS_FLAG | Paint.FILTER_BITMAP_FLAG);
     }
 
     /** 盒式模糊，在 1/4 尺寸的小图上跑 */
