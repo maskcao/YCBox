@@ -80,8 +80,10 @@ class MainActivity : BaseVbActivity<ActivityMainBinding>() {
                 // 不能用 getItem(position)（条目数与页位数不对齐）
                 pageMenuIds.getOrNull(position)?.let { selectDock(it) }
                 showDock(false)
-                // 新页的列表内容是异步填充的，补一次重录（下一帧生效，不再是定时器）
-                mBinding.vp.postDelayed({ mBinding.dockBar.refreshBackdrop() }, 260)
+                // 新页的海报是异步填进来的，单次重录只会抓到空壳；连续追 600ms，
+                // 让 dock 的底图跟着新页一起长出来。首帧直接换底不溶化——页面本身
+                // 是瞬时跳过去的，玻璃再溶 60ms 就是看得见的慢半拍
+                mBinding.dockBar.refreshBackdropFor(600L, snap = true)
             }
         })
     }

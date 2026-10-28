@@ -78,6 +78,11 @@ class GlassDockView @JvmOverloads constructor(
         }
     }
 
+    /** 换页后用：在 durationMs 内连续重录，跟着新页异步加载的海报一起变色 */
+    fun refreshBackdropFor(durationMs: Long, snap: Boolean = false) {
+        glass.refreshFor(durationMs, snap)
+    }
+
     override fun onDraw(canvas: Canvas) {
         val w = width.toFloat()
         val h = height.toFloat()

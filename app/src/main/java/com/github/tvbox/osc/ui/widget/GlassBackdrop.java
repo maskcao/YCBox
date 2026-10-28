@@ -79,8 +79,12 @@ public final class GlassBackdrop {
     /**
      * 新旧底图的去色淡入时长。底图最快也只有 16fps，直接换帧会看到背景色一格一格跳；
      * 淡入把台阶抹平成连续的溶化，代价只是淡入期间每帧多画一个圆角矩形。
+     *
+     * <p>取成录制周期本身而不是一个更大的定值：淡入比录帧慢，就永远在放「上两帧的
+     * 混合」，观感上等于凭空多出一倍延迟。淡入刚好等于周期时，每一帧都在下一帧到来
+     * 前完成，混合是连续的、跟手的。
      */
-    private static final long FADE_MS = 120L;
+    private final long fadeMs;
 
     private static final ColorMatrixColorFilter SATURATION_FILTER = saturate(SATURATION);
 
@@ -133,7 +137,13 @@ public final class GlassBackdrop {
                     if (attached && shouldCapture()) {
                         long now = SystemClock.uptimeMillis();
                         // 节流：不更新 lastX/lastY 也不清 pending，下一帧仍会重试
-                        if (now - lastCaptureAt < recaptureInterval) return true;
+                        if (now - lastCaptureAt < recaptureInterval) {
+                            // 突发期间要自己把下一帧排上：否则这一帧被节流挡掉之后
+                            // 没有新帧，只能等下一次 tick 重新 invalidate，
+                            // 实测重录节奏从 60ms 被拖成 100ms
+                            if (now < burstUntil) host.postInvalidateOnAnimation();
+                            return true;
+                        }
                         lastCaptureAt = now;
                         pending = false;
                         lastX = hostLoc[0];
@@ -167,6 +177,7 @@ public final class GlassBackdrop {
         this.density = host.getResources().getDisplayMetrics().density;
         this.recaptureInterval = RECAPTURE_INTERVAL_MS
                 + (host.hashCode() & 0x7fffffff) % RECAPTURE_JITTER_MS;
+        this.fadeMs = recaptureInterval;
         host.setTag(R.id.tag_glass_backdrop, this);
         cleanInstances();
         INSTANCES.add(new WeakReference<>(this));
@@ -193,6 +204,8 @@ public final class GlassBackdrop {
             listenerAdded = false;
         }
         releaseObservers();
+        host.removeCallbacks(burstTick);
+        burstUntil = 0L;
         host.setTag(R.id.tag_glass_backdrop, null);
         for (int i = 0; i < INSTANCES.size(); i++) {
             if (INSTANCES.get(i).get() == this) INSTANCES.remove(i);
@@ -222,6 +235,36 @@ public final class GlassBackdrop {
         host.invalidate();
     }
 
+    private long burstUntil;
+    private boolean snapNext;
+
+    /**
+     * 突发重录：在 {@code durationMs} 内每隔一个录制周期重录一次。
+     *
+     * <p>换页时新页的海报是 Glide 异步填进来的，单次重录只能抓到「框架已就位、
+     * 图片还没有」的空壳，玻璃就要等到下一次滚动事件才变色。改成换页后连续追几帧，
+     * 底图跟着内容一起长出来，观感上就是玻璃实时透出正在加载的新页。
+     *
+     * @param snap 首帧不做淡入、直接换底。瞬时换页时页面本身就是一格跳过去的，
+     *             玻璃再溶 60ms 就是肉眼可见的「跟不上」；后续帧仍走淡入抹台阶。
+     */
+    public void refreshFor(long durationMs, boolean snap) {
+        host.removeCallbacks(burstTick);
+        snapNext = snap;
+        burstUntil = SystemClock.uptimeMillis() + Math.max(0L, durationMs);
+        refresh();
+        if (durationMs > 0L) host.postDelayed(burstTick, recaptureInterval);
+    }
+
+    private final Runnable burstTick = new Runnable() {
+        @Override
+        public void run() {
+            if (SystemClock.uptimeMillis() >= burstUntil) return;
+            refresh();
+            host.postDelayed(this, recaptureInterval);
+        }
+    };
+
     /**
      * 把模糊后的底图画到 (0,0)-(w,h)。
      *
@@ -233,14 +276,14 @@ public final class GlassBackdrop {
         if (cur == null || cur.isRecycled() || curShader == null) return false;
         float radius = corner(w, h);
         long age = SystemClock.uptimeMillis() - fadeStartAt;
-        if (previous != null && !previous.isRecycled() && prevShader != null && age < FADE_MS) {
+        if (previous != null && !previous.isRecycled() && prevShader != null && age < fadeMs) {
             // 旧底图铺底、新底图按进度淡入：背景色是「溶过去」的，
             // 而不是每 45ms 硬跳一格——跳格就是用户看到的「颜色切换」
             prevPaint.setShader(prevShader);
             prevPaint.setAlpha(255);
             canvas.drawRoundRect(0, 0, w, h, radius, radius, prevPaint);
             curPaint.setShader(curShader);
-            curPaint.setAlpha((int) (255f * age / FADE_MS));
+            curPaint.setAlpha((int) (255f * age / fadeMs));
             canvas.drawRoundRect(0, 0, w, h, radius, radius, curPaint);
             host.postInvalidateOnAnimation();
             return true;
@@ -291,6 +334,11 @@ public final class GlassBackdrop {
         curShader = shaderFor(bmp);
         prevShader = buffers[1 - target] == null ? null : shaderFor(buffers[1 - target]);
         previous = buffers[1 - target];
+        if (snapNext) {
+            snapNext = false;
+            previous = null;
+            prevShader = null;
+        }
         fadeStartAt = SystemClock.uptimeMillis();
     }
 
