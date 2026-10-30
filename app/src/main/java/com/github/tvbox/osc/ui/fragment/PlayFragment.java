@@ -378,6 +378,9 @@ public class PlayFragment extends BaseLazyFragment {
 
             ImmersionBar.with(mActivity)
                     .hideBar(BarHide.FLAG_HIDE_BAR)
+                    // fullScreen(true) 才会把 LAYOUT_HIDE_NAVIGATION 写进 systemUiVisibility：
+                    // 少了它窗口的内容区会停在手势条上方，播放器底下留一条窗口底色（浅色下是白的）。
+                    .fullScreen(true)
                     .navigationBarColor(R.color.black)//即使隐藏部分时候还是会显示
                     .navigationBarDarkIcon(false)//黑底配白图标
                     .fitsSystemWindows(false)
@@ -387,6 +390,7 @@ public class PlayFragment extends BaseLazyFragment {
 
             ImmersionBar.with(mActivity)
                     .hideBar(BarHide.FLAG_SHOW_BAR)
+                    .fullScreen(false)
                     // 原来写死 R.color.white：深色主题下退出全屏会在底部留一条白边
                     .navigationBarColor(R.color.windowBackground)
                     .navigationBarDarkIcon(!Utils.isDarkTheme())

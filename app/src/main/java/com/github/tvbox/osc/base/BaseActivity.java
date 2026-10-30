@@ -68,6 +68,9 @@ public abstract class BaseActivity extends AppCompatActivity implements CustomAd
     private ImageView mWallpaperView;
     private View mWallpaperScrim;
 
+    /** 最近一次派发下来的导航栏高度，退出沉浸全屏时用它把底部留白垫回去 */
+    private int mNavInsetBottom;
+
     /**
      * 按已保存的主题强制 Activity 的 uiMode。
      *
@@ -312,11 +315,12 @@ public abstract class BaseActivity extends AppCompatActivity implements CustomAd
                 return insets;
             }
             int bottom = insets.getSystemWindowInsetBottom();
-            for (int i = content.getChildCount() - 1; i >= 2; i--) {
-                View child = content.getChildAt(i);
-                child.setPadding(child.getPaddingLeft(), child.getPaddingTop(),
-                        child.getPaddingRight(), bottom);
+            // 全屏时导航栏被隐藏，insets 会派发 0；只记住非全屏时的值，
+            // 退出全屏那一刻才能立刻把留白垫回去（insets 未必马上重新派发）。
+            if (!isImmersiveFullscreen() && bottom > 0) {
+                mNavInsetBottom = bottom;
             }
+            applyContentBottomInset(isImmersiveFullscreen() ? 0 : bottom);
             return insets;
         });
 
@@ -354,6 +358,39 @@ public abstract class BaseActivity extends AppCompatActivity implements CustomAd
     /** 不想显示壁纸的页面（比如全屏播放）覆写返回 false */
     protected boolean supportWallpaper() {
         return true;
+    }
+
+    /**
+     * 页面此刻是否处于沉浸全屏（播放器铺满整屏）。
+     *
+     * <p>沉浸全屏时不能给页面根布局垫导航栏 padding：窗口虽然是 1080 高，
+     * 但内容被垫掉 63px 后播放器只剩 1017，底部那一截就露出窗口底色（浅色主题下是白的）。
+     */
+    protected boolean isImmersiveFullscreen() {
+        return false;
+    }
+
+    /**
+     * 给页面根布局底部垫/去 padding（壁纸层不属于页面内容，从 index 2 开始）。
+     *
+     * <p>沉浸全屏切换不一定伴随新一轮 insets 派发，所以要能主动调用，见
+     * {@link #refreshContentBottomInset()}。
+     */
+    protected void applyContentBottomInset(int bottom) {
+        ViewGroup content = findViewById(android.R.id.content);
+        if (content == null) {
+            return;
+        }
+        for (int i = content.getChildCount() - 1; i >= 2; i--) {
+            View child = content.getChildAt(i);
+            child.setPadding(child.getPaddingLeft(), child.getPaddingTop(),
+                    child.getPaddingRight(), bottom);
+        }
+    }
+
+    /** 沉浸全屏状态变化后重算页面底部留白，立刻生效。 */
+    protected void refreshContentBottomInset() {
+        applyContentBottomInset(isImmersiveFullscreen() ? 0 : mNavInsetBottom);
     }
 
     /**

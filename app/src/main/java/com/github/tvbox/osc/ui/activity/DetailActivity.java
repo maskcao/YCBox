@@ -165,6 +165,12 @@ public class DetailActivity extends BaseVbActivity<ActivityDetailBinding> {
         mBinding.ivPrivateBrowsing.postDelayed(NotificationUtils::cancelAll, 800);
     }
 
+    /** 全屏预览时播放器要铺到手势条后面，父层不能再垫导航栏 padding */
+    @Override
+    protected boolean isImmersiveFullscreen() {
+        return fullWindows;
+    }
+
     private void initView() {
         mBinding.ivPrivateBrowsing.setVisibility(Hawk.get(HawkConfig.PRIVATE_BROWSING, false) ? View.VISIBLE : View.GONE);
         mBinding.ivPrivateBrowsing.setOnClickListener(view -> ToastUtils.showShort("当前为无痕浏览"));
@@ -817,6 +823,8 @@ public class DetailActivity extends BaseVbActivity<ActivityDetailBinding> {
         playFragment.changedLandscape(fullWindows);
         //activity处理预览尺寸(全屏/非全屏预览)
         mBinding.previewPlayer.setLayoutParams(fullWindows ? windowsFull : windowsPreview);
+        // 全屏切换不一定触发 insets 重新派发，这里主动把底部导航栏留白垫掉/垫回去
+        refreshContentBottomInset();
         mBinding.mGridView.setVisibility(fullWindows ? View.GONE : View.VISIBLE);
         mBinding.mGridViewFlag.setVisibility(fullWindows ? View.GONE : View.VISIBLE);
 
