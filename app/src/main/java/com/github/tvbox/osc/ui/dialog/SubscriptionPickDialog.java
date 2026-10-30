@@ -72,6 +72,9 @@ public class SubscriptionPickDialog extends BottomPopupView {
 
         TvRecyclerView rv = findViewById(R.id.list);
         rv.setLayoutManager(new V7LinearLayoutManager(getContext(), 1, false));
+        // TvRecyclerView 会用这里的间距重置每条的 LayoutParams 边距（默认 0），
+        // 条目布局里写的 marginBottom 在这个列表里是失效的 —— 不设这一行两张卡片直接贴在一起。
+        rv.setSpacingWithMargins(getResources().getDimensionPixelSize(R.dimen.dp_12), 0);
         mAdapter = new SubscriptionAdapter();
         mAdapter.setPickerMode(true);
         mAdapter.setOnItemClickListener((adapter, view, position) -> {

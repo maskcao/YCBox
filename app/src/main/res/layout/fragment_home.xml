@@ -65,7 +65,9 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
 
-            <!-- 当前首页源：点击切源，长按刷新订阅；logo 由配置决定，未声明时隐藏 -->
+            <!-- 当前首页源：点击切源，长按刷新订阅；logo 由配置决定，未声明时隐藏。
+                 箭头用独立 ImageView，不再用 tvName 的 drawableRight：
+                 24dp 的复合图标把行高撑到 24dp，文字在胶囊里会往上飘半格 -->
             <LinearLayout
                 android:id="@+id/nameContainer"
                 android:layout_width="wrap_content"
@@ -92,9 +94,6 @@
                     android:id="@+id/tvName"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:drawablePadding="4dp"
-                    android:drawableRight="@drawable/ic_arrow_down"
-                    android:drawableTint="@color/text_sub_foreground"
                     android:ellipsize="marquee"
                     android:focusable="true"
                     android:focusableInTouchMode="true"
@@ -104,6 +103,16 @@
                     android:textColor="@color/text_foreground"
                     android:textSize="13sp"
                     android:textStyle="bold" />
+
+                <ImageView
+                    android:id="@+id/ivSourceArrow"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="10dp"
+                    android:importantForAccessibility="no"
+                    android:src="@drawable/ic_chevron_down"
+                    android:translationY="1dp"
+                    app:tint="@color/text_sub_foreground" />
 
             </LinearLayout>
 

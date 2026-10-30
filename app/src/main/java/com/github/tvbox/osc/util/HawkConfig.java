@@ -19,6 +19,10 @@ public class HawkConfig {
     public static final String LIVE_SUBSCRIPTIONS = "live_subscriptions";
     public static final String EPG_HISTORY = "epg_history";
     public static final String HOME_API = "home_api";
+    /** 上次首页源的显示名：首帧就有名字可显示，不必等配置解析完 */
+    public static final String HOME_SOURCE_NAME = "home_source_name";
+    /** 上次首页源的 logo 地址：同样为了首帧就能命中 Glide 磁盘缓存 */
+    public static final String HOME_SOURCE_LOGO = "home_source_logo";
     public static final String DEFAULT_PARSE = "parse_default";
     public static final String DEBUG_OPEN = "debug_open";
     public static final String IJK_CODEC = "ijk_codec";

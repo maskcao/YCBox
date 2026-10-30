@@ -2,6 +2,8 @@ package com.github.tvbox.osc.ui.fragment
 
 import android.content.Intent
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.drawable.BitmapDrawable
 import android.os.Bundle
 import android.os.Handler
 import android.view.Gravity
@@ -61,6 +63,8 @@ import com.orhanobut.hawk.Hawk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.File
+import java.io.FileOutputStream
 
 class HomeFragment : BaseVbFragment<FragmentHomeBinding>() {
 
@@ -97,6 +101,17 @@ class HomeFragment : BaseVbFragment<FragmentHomeBinding>() {
 
     override fun init() {
         ControlManager.get().startServer()
+        // 首帧先用上次的源名/头像占位：配置解析完之前顶栏不会是空的、也不会闪一下 "YCBox"。
+        // 头像是远程图，配置里拿到地址前先拿上次那份，Glide 直接命中磁盘缓存。
+        Hawk.get<String>(HawkConfig.HOME_SOURCE_NAME, "")?.takeIf { it.isNotEmpty() }?.let {
+            setSourceName(it)
+        }
+        // 头像先从本地那张小图同步画出来：Glide 解码 gif 首帧要几百毫秒，
+        // 等它回来头像会明显"迟到"一下。网络那张随后再刷新覆盖。
+        showCachedSourceLogo()
+        Hawk.get<String>(HawkConfig.HOME_SOURCE_LOGO, "")?.takeIf { it.isNotEmpty() }?.let {
+            loadSourceLogo(it)
+        }
         mBinding.subContainer.setOnClickListener {
             showSubscriptionSwitch()
         }
@@ -202,8 +217,7 @@ class HomeFragment : BaseVbFragment<FragmentHomeBinding>() {
         if (home != null && !home.name.isNullOrEmpty()) {
             // 顶栏原样显示配置里的源名，和切源面板里那一条逐字对得上。
             // （之前会剥掉两头的 🐮 装饰，看着像少了一段。）
-            mBinding.tvName.text = home.name
-            mBinding.tvName.postDelayed({ mBinding.tvName.isSelected = true }, 2000)
+            setSourceName(home.name)
         }
         loadSourceLogo()
         updateSubscriptionLabel()
@@ -259,32 +273,69 @@ class HomeFragment : BaseVbFragment<FragmentHomeBinding>() {
         mBinding.subContainer.text = if (name.isNullOrEmpty()) "订阅" else name
     }
 
+    /** 当前已发起加载的 logo 地址，用来挡掉重复请求 */
+    private var logoUrl: String? = null
+
+    /** 上次成功加载后落盘的小图：冷启动首帧直接同步画，不用等 Glide */
+    private val logoFile: File
+        get() = File(App.getInstance().filesDir, "home_source_logo.png")
+
+    /** 首帧画上去的那张，Glide 换新图期间拿它当占位，避免闪成空白 */
+    private var cachedLogoBitmap: Bitmap? = null
+
+    private fun showCachedSourceLogo() {
+        if (!logoFile.exists()) return
+        val bitmap = BitmapFactory.decodeFile(logoFile.absolutePath) ?: return
+        cachedLogoBitmap = bitmap
+        mBinding.ivSourceLogo.setImageBitmap(bitmap)
+        mBinding.ivSourceLogo.visibility = View.VISIBLE
+        // 记下这张图对应的地址：后面 loadSourceLogo 看到同一个地址就直接跳过。
+        // 否则 Glide 一 start 会把 imageView 清空，首帧刚画上的头像又被抹掉，
+        // 等它解码完成才回来——正是要消掉的"迟到"。
+        logoUrl = Hawk.get(HawkConfig.HOME_SOURCE_LOGO, "")
+    }
+
     /**
      * 显示订阅配置里声明的 logo（首页左上角"播放源头像"）。
      *
-     * <p>配置没写 logo 时整块 GONE —— 留一个 26dp 的空洞比不显示更难看。
+     * <p>配置没写 logo 时整块 GONE —— 留一个 20dp 的空洞比不显示更难看。
      *
      * <p>用 asBitmap 只取首帧：源上给的多半是 gif（当前这个 320x320、1.2MB、上百帧），
-     * 在 26dp 的坑位里循环播放既费电、又抢视线，静态首帧观感反而更稳。
+     * 在 20dp 的坑位里循环播放既费电、又抢视线，静态首帧观感反而更稳。
      *
      * <p>用圆角而非正圆：部分源的 logo 是带文字的方形图，正圆会把四角文字切掉。
+     *
+     * <p>url 默认取当前配置；首帧那次传的是上次记住的地址，不用等配置解析。
      */
-    private fun loadSourceLogo() {
-        val logo = ApiConfig.get().logo
-        if (logo.isNullOrEmpty()) {
+    private fun loadSourceLogo(url: String? = ApiConfig.get().logo) {
+        if (url.isNullOrEmpty()) {
+            // 配置还没解析完时 logo 当然是空的，不能当成"源没有头像"：
+            // 照那个分支走会把上次缓存的小图连文件一起删掉，首帧头像就没了。
+            if (!dataInitOk) return
+            logoUrl = null
+            Hawk.put(HawkConfig.HOME_SOURCE_LOGO, "")
+            logoFile.delete()
+            cachedLogoBitmap = null
             mBinding.ivSourceLogo.visibility = View.GONE
             return
         }
+        // init() 拿着上次的地址先加载过一遍，initData() 解析完配置会再调一次：
+        // 地址没变就不重复请求，避免同一张图闪一下
+        if (url == logoUrl) return
+        logoUrl = url
+        Hawk.put(HawkConfig.HOME_SOURCE_LOGO, url)
         // 先占位显示，加载失败再撤掉，避免闪一下又空出来
         mBinding.ivSourceLogo.visibility = View.VISIBLE
+        val options = RequestOptions()
+            .override(ConvertUtils.dp2px(20f))
+            .transform(RoundedCorners(ConvertUtils.dp2px(8f)))
+            .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
+        // 有本地那张就先顶上去：Glide 一开始请求会把 imageView 清空
+        cachedLogoBitmap?.let { options.placeholder(BitmapDrawable(resources, it)) }
         Glide.with(this)
             .asBitmap()
-            .load(logo)
-            .apply(
-                RequestOptions()
-                    .transform(RoundedCorners(ConvertUtils.dp2px(8f)))
-                    .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
-            )
+            .load(url)
+            .apply(options)
             .listener(object : RequestListener<Bitmap> {
                 override fun onLoadFailed(
                     e: GlideException?,
@@ -292,7 +343,15 @@ class HomeFragment : BaseVbFragment<FragmentHomeBinding>() {
                     target: Target<Bitmap>,
                     isFirstResource: Boolean
                 ): Boolean {
-                    mBinding.ivSourceLogo.visibility = View.GONE
+                    // 失败就把地址放开，等配置解析完再试一次；
+                    // 本地还留着上次那张小图的话继续显示，别把人头像直接撤成空白
+                    if (logoUrl == url) {
+                        logoUrl = null
+                        Hawk.put(HawkConfig.HOME_SOURCE_LOGO, "")
+                    }
+                    if (!logoFile.exists()) {
+                        mBinding.ivSourceLogo.visibility = View.GONE
+                    }
                     return false
                 }
 
@@ -302,9 +361,34 @@ class HomeFragment : BaseVbFragment<FragmentHomeBinding>() {
                     target: Target<Bitmap>,
                     dataSource: DataSource,
                     isFirstResource: Boolean
-                ): Boolean = false
+                ): Boolean {
+                    // 落一张 20dp 的小图，下次冷启动首帧直接画它
+                    val bitmap = resource ?: return false
+                    lifecycleScope.launch(Dispatchers.IO) {
+                        try {
+                            FileOutputStream(logoFile).use {
+                                bitmap.compress(Bitmap.CompressFormat.PNG, 100, it)
+                            }
+                        } catch (_: Throwable) {
+                        }
+                    }
+                    return false
+                }
             })
             .into(mBinding.ivSourceLogo)
+    }
+
+    /**
+     * 顶栏源名：写文本的同时记到本地，下次冷启动第一帧就能直接显示。
+     *
+     * <p>立刻置 selected：名字比胶囊长时从第一帧就开始滚动，
+     * 不用像原来那样等 2 秒——那 2 秒里用户看到的只是一段被截断的标题。
+     */
+    private fun setSourceName(name: String) {
+        if (mBinding.tvName.text.toString() == name) return
+        mBinding.tvName.text = name
+        Hawk.put(HawkConfig.HOME_SOURCE_NAME, name)
+        mBinding.tvName.isSelected = true
     }
 
     private fun loadConfig(){
@@ -338,6 +422,9 @@ class HomeFragment : BaseVbFragment<FragmentHomeBinding>() {
 
     private fun loadJar(){
         if (!ApiConfig.get().spider.isNullOrEmpty()) {
+            // 挪到后台线程加载会让 csp.jar 的本地代理探测走另一条路径：
+            // Init.init 里的端口区间扫描从 0.6s 变成 17s，分类反而更晚出来。
+            // 实测主线程调用整段没有卡顿到肉眼可见（~0.9s），保持原样。
             ApiConfig.get().loadJar(
                 onlyConfigChanged,
                 ApiConfig.get().spider,

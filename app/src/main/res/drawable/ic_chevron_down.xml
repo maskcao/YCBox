@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 顶栏源名胶囊里的下拉箭头。和 ic_arrow_down 是同一个 V 形，
+     只是把 960 的视口裁到图形本身（446×262），图标四周不再有半格透明留白，
+     箭头才能和文字、胶囊右边缘保持一样的间距。 -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="12dp"
+    android:height="7dp"
+    android:viewportWidth="446"
+    android:viewportHeight="262">
+    <path
+        android:fillColor="@android:color/white"
+        android:pathData="M223,262Q215,262 208,259.5Q201,257 195,251L11,67Q0,56 0,39Q0,22 11,11Q22,0 39,0Q56,0 67,11L223,167L379,11Q390,0 407,0Q424,0 435,11Q446,22 446,39Q446,56 435,67L251,251Q245,257 238,259.5Q231,262 223,262Z" />
+</vector>
