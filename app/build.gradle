@@ -12,8 +12,8 @@ android {
         applicationId 'com.maskcao.ycbox'
         minSdkVersion 24
         targetSdkVersion 30
-        versionCode 20107
-        versionName '2.1.7'
+        versionCode 20108
+        versionName '2.1.8'
         multiDexEnabled true
         //设置room的Schema的位置
         javaCompileOptions {

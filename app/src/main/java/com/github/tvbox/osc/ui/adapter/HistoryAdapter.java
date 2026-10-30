@@ -58,5 +58,11 @@ public class HistoryAdapter extends BaseQuickAdapter<VodInfo, BaseViewHolder> {
         ImageView ivThumb = helper.getView(R.id.ivThumb);
         //统一走 ThumbLoader：data: base64 封面 Picasso 加载不了
         ThumbLoader.load(ivThumb, item.pic);
+
+        // 与 GridAdapter 相同：ShadowLayout 自己 clickable=true，会吃掉封面区的触摸，
+        // 只能点到底部标题；这里把封面点击转发给整张卡片，否则点封面无法进入详情。
+        View poster = helper.getView(R.id.shadowPoster);
+        poster.setOnClickListener(v -> helper.itemView.performClick());
+        poster.setClickable(true);
     }
 }

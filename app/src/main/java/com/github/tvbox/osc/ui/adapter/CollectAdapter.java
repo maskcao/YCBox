@@ -39,5 +39,10 @@ public class CollectAdapter extends BaseQuickAdapter<VodCollect, BaseViewHolder>
         ImageView ivThumb = helper.getView(R.id.ivThumb);
         //统一走 ThumbLoader：data: base64 封面 Picasso 加载不了
         ThumbLoader.load(ivThumb, item.pic);
+
+        // 与 GridAdapter 相同：ShadowLayout 会消费封面区的触摸，把封面点击转发给整张卡片
+        View poster = helper.getView(R.id.shadowPoster);
+        poster.setOnClickListener(v -> helper.itemView.performClick());
+        poster.setClickable(true);
     }
 }
